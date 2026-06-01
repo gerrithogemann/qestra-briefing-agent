@@ -1,0 +1,9 @@
+{
+  "name": "qestra-briefing-agent",
+  "version": "1.0.0",
+  "description": "Qestra Morning Briefing Agent — runs daily at 6am Dublin time",
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  }
+}
