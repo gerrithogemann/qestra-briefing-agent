@@ -144,32 +144,37 @@ async function generateBriefing(emails, calendar, notionTasks) {
       'anthropic-version': '2023-06-01',
     },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-5',
       max_tokens: 1500,
       system: `You are a sharp executive assistant for a solo healthtech founder in Dublin, Ireland.
 They are building Keeper (healthcare rota SaaS) and TropiQ (tropical medicine learning app).
-Be direct, prioritised, specific. No fluff. Return ONLY valid JSON — no markdown, no preamble.`,
+Be direct, prioritised, specific. No fluff.
+CRITICAL: Return ONLY a raw JSON object. No markdown fences, no backticks, no explanation. Start your response with { and end with }.`,
       messages: [{ role: 'user', content: `Today: ${today}
 EMAIL: ${JSON.stringify(emails)}
 CALENDAR: ${JSON.stringify(calendar)}
 NOTION TASKS: ${JSON.stringify(notionTasks)}
 
-Return ONLY this JSON:
+Return ONLY this raw JSON object (no backticks, no markdown):
 {
   "headline": "one sharp sentence summarising the day",
-  "priority_score": <1-10>,
-  "top_3_tasks": [{"rank":1,"task":"...","source":"Email|Notion|Calendar","why":"..."}],
-  "email_drafts": [{"to":"...","subject":"...","draft":"..."}],
-  "schedule_summary": "...",
-  "recommended_focus_block": "...",
-  "watch_out": "...",
+  "priority_score": 7,
+  "top_3_tasks": [{"rank":1,"task":"example task","source":"Notion","why":"reason"}],
+  "email_drafts": [{"to":"someone@email.com","subject":"Re: something","draft":"draft text"}],
+  "schedule_summary": "summary of today",
+  "recommended_focus_block": "9am-11am",
+  "watch_out": "one key risk",
   "qestra_spotlight": "highest-impact Qestra task today"
 }` }],
     }),
   });
 
   const data = await res.json();
-  const text = data.content?.find(b => b.type === 'text')?.text || '{}';
+  console.log('Claude raw:', JSON.stringify(data).slice(0,400));
+  if (data.error) throw new Error('Claude API error: ' + JSON.stringify(data.error));
+  const text = data.content?.find(b => b.type === 'text')?.text || '';
+  console.log('Claude text:', text.slice(0,200));
+  if (!text) throw new Error('Claude returned empty text');
   try { return JSON.parse(text.replace(/```json|```/g, '').trim()); }
   catch { throw new Error('Claude parse failed: ' + text.slice(0, 200)); }
 }
