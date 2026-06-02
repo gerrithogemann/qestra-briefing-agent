@@ -80,26 +80,70 @@ async function fetchGmail(token) {
 
 // ── Calendar ──────────────────────────────────────────────────
 async function fetchCalendar(token) {
+  const headers = { Authorization: `Bearer ${token}` };
   const now = new Date();
+
+  // Start of today, end extended to 3am next day to catch midnight shifts
   const start = new Date(now); start.setHours(0,0,0,0);
-  const end = new Date(now); end.setHours(23,59,59,999);
+  const end = new Date(now); end.setDate(end.getDate() + 1); end.setHours(3,0,0,0);
 
-  const url = 'https://www.googleapis.com/calendar/v3/calendars/primary/events?' + new URLSearchParams({
-    timeMin: start.toISOString(), timeMax: end.toISOString(),
-    singleEvents: 'true', orderBy: 'startTime', maxResults: '15',
+  // Step 1: Get ALL calendars (primary + Medicine + anything else)
+  const calListRes = await fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList?maxResults=50', { headers });
+  const calListData = await calListRes.json();
+  const calendars = calListData.items || [];
+  console.log('Calendars found:', calendars.map(c => c.summary).join(', '));
+
+  // Step 2: Fetch events from ALL calendars in parallel
+  const allEventArrays = await Promise.all(
+    calendars.map(async (cal) => {
+      try {
+        const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(cal.id)}/events?` + new URLSearchParams({
+          timeMin: start.toISOString(),
+          timeMax: end.toISOString(),
+          singleEvents: 'true',
+          orderBy: 'startTime',
+          maxResults: '20',
+        });
+        const res = await fetch(url, { headers });
+        const data = await res.json();
+        return (data.items || []).map(e => ({ ...e, calendarName: cal.summary }));
+      } catch { return []; }
+    })
+  );
+
+  // Step 3: Flatten, deduplicate, sort by start time
+  const seen = new Set();
+  const allItems = allEventArrays.flat().filter(e => {
+    if (seen.has(e.id)) return false;
+    seen.add(e.id);
+    return true;
+  }).sort((a, b) => {
+    const aT = a.start?.dateTime || a.start?.date || '';
+    const bT = b.start?.dateTime || b.start?.date || '';
+    return aT.localeCompare(bT);
   });
 
-  const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-  const data = await res.json();
-  const items = data.items || [];
-
-  const events = items.map(e => {
+  // Step 4: Format
+  const events = allItems.map(e => {
     const s = e.start?.dateTime || e.start?.date || '';
+    const en = e.end?.dateTime || e.end?.date || '';
     const time = s ? new Date(s).toLocaleTimeString('en-IE', { hour:'2-digit', minute:'2-digit', timeZone:'Europe/Dublin' }) : 'All day';
-    return { time, title: e.summary || 'Untitled' };
+    const endTime = en ? new Date(en).toLocaleTimeString('en-IE', { hour:'2-digit', minute:'2-digit', timeZone:'Europe/Dublin' }) : '';
+    return {
+      time,
+      end_time: endTime,
+      title: e.summary || 'Untitled',
+      calendar: e.calendarName,
+      display: `${time}${endTime ? '–'+endTime : ''} — ${e.summary || 'Untitled'} (${e.calendarName})`,
+    };
   });
 
-  return { event_count: events.length, events, first_meeting: events[0]?.time || 'None' };
+  return {
+    event_count: events.length,
+    events,
+    first_meeting: events[0]?.display || 'None',
+    calendars_read: calendars.map(c => c.summary),
+  };
 }
 
 // ── Notion Tasks ──────────────────────────────────────────────
