@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#090909" />
+  <title>Aleksandra</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #090909; --surface: #0f0f0f; --surface2: #141414;
+      --border: #1c1c1c; --border2: #242424;
+      --text: #c8c8c8; --muted: #666; --faint: #2a2a2a;
+      --amber: #f59e0b; --amber-dim: rgba(245,158,11,0.10);
+      --green: #4ade80; --red: #f87171; --yellow: #facc15; --blue: #60a5fa;
+      --mono: 'DM Mono', monospace; --sans: 'Syne', sans-serif;
+    }
+    html, body {
+      background: var(--bg); color: var(--text);
+      font-family: var(--sans); height: 100%;
+      -webkit-font-smoothing: antialiased;
+      overscroll-behavior: none;
+    }
+
+    /* ── Layout ── */
+    .app { display: flex; flex-direction: column; height: 100vh; max-width: 680px; margin: 0 auto; }
+
+    /* ── Header ── */
+    .header {
+      padding: 20px 24px 16px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .wordmark { font-family: var(--sans); font-size: 15px; font-weight: 700; letter-spacing: 0.15em; color: var(--amber); text-transform: uppercase; }
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 6px var(--green); }
+    .status-dot.loading { background: var(--yellow); box-shadow: 0 0 6px var(--yellow); animation: pulse 1.2s ease-in-out infinite; }
+    .date-line { font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: 0.04em; }
+
+    /* ── Stats row ── */
+    .stats { display: flex; gap: 10px; margin-top: 14px; }
+    .stat { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; }
+    .stat-label { font-family: var(--mono); font-size: 8px; letter-spacing: 0.2em; color: var(--muted); text-transform: uppercase; margin-bottom: 6px; }
+    .stat-value { font-family: var(--sans); font-size: 22px; font-weight: 700; color: var(--text); }
+    .stat-value.amber { color: var(--amber); }
+    .stat-value.green { color: var(--green); }
+
+    /* ── Tabs ── */
+    .tabs { display: flex; padding: 0 24px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+    .tab { flex: 1; padding: 14px 0; font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); background: none; border: none; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; }
+    .tab.active { color: var(--amber); border-bottom-color: var(--amber); }
+    .tab-badge { display: inline-block; background: var(--red); color: #000; font-size: 8px; font-weight: 700; padding: 1px 5px; border-radius: 10px; margin-left: 6px; vertical-align: middle; }
+
+    /* ── Content ── */
+    .content { flex: 1; overflow-y: auto; padding: 20px 24px 40px; }
+    .content::-webkit-scrollbar { width: 3px; }
+    .content::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+    /* ── Empty state ── */
+    .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 200px; gap: 10px; }
+    .empty-state-icon { font-size: 32px; opacity: 0.3; }
+    .empty-state-text { font-family: var(--mono); font-size: 11px; color: var(--faint); text-align: center; line-height: 1.8; }
+
+    /* ── Briefing items ── */
+    .briefing-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px 20px;
+      margin-bottom: 12px;
+      transition: border-color 0.2s;
+      animation: fadeUp 0.3s ease both;
+    }
+    .briefing-item:active { border-color: var(--border2); }
+    .item-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+    .item-meta-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .item-agent { font-family: var(--mono); font-size: 8px; letter-spacing: 0.15em; color: var(--amber); text-transform: uppercase; }
+    .item-type { font-family: var(--mono); font-size: 8px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+    .priority-badge { font-family: var(--mono); font-size: 7px; padding: 2px 6px; border-radius: 3px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 500; }
+    .priority-high { background: rgba(248,113,113,0.12); color: var(--red); }
+    .priority-medium { background: rgba(250,204,21,0.1); color: var(--yellow); }
+    .priority-low { background: rgba(74,222,128,0.1); color: var(--green); }
+    .item-title { font-size: 15px; font-weight: 600; color: #ddd; line-height: 1.4; margin-bottom: 8px; }
+    .item-summary { font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 14px; }
+    .item-draft { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 12px 14px; margin-bottom: 14px; }
+    .item-draft-label { font-family: var(--mono); font-size: 8px; color: var(--amber); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 8px; }
+    .item-draft-text { font-size: 13px; color: #aaa; line-height: 1.65; white-space: pre-wrap; }
+    .item-actions { display: flex; gap: 8px; }
+    .btn { flex: 1; padding: 11px; border-radius: 7px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; border: none; cursor: pointer; transition: all 0.15s; }
+    .btn-approve { background: rgba(74,222,128,0.12); color: var(--green); border: 1px solid rgba(74,222,128,0.2); }
+    .btn-approve:active { background: rgba(74,222,128,0.22); }
+    .btn-reject { background: rgba(248,113,113,0.08); color: var(--red); border: 1px solid rgba(248,113,113,0.15); }
+    .btn-reject:active { background: rgba(248,113,113,0.18); }
+    .btn-edit { background: transparent; color: var(--muted); border: 1px solid var(--border2); }
+    .btn-edit:active { background: var(--surface2); }
+    .item-decided { opacity: 0.45; pointer-events: none; }
+    .decided-badge { display: inline-flex; align-items: center; gap: 5px; font-family: var(--mono); font-size: 9px; padding: 4px 10px; border-radius: 4px; margin-bottom: 10px; }
+    .decided-approved { background: rgba(74,222,128,0.08); color: var(--green); }
+    .decided-rejected { background: rgba(248,113,113,0.08); color: var(--red); }
+
+    /* ── Edit modal ── */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; display: flex; align-items: flex-end; animation: fadeIn 0.2s ease; }
+    .modal { background: var(--surface); border-top: 1px solid var(--border2); border-radius: 16px 16px 0 0; width: 100%; max-width: 680px; margin: 0 auto; padding: 20px 24px 40px; animation: slideUp 0.3s ease; }
+    .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .modal-title { font-family: var(--mono); font-size: 10px; letter-spacing: 0.15em; color: var(--amber); text-transform: uppercase; }
+    .modal-close { background: none; border: none; color: var(--muted); font-size: 18px; cursor: pointer; padding: 4px; }
+    .modal-textarea { width: 100%; background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; padding: 14px; color: #bbb; font-family: var(--mono); font-size: 12px; line-height: 1.7; resize: none; height: 180px; outline: none; margin-bottom: 14px; }
+    .modal-textarea:focus { border-color: var(--amber); }
+    .btn-send { width: 100%; padding: 14px; background: linear-gradient(135deg, #f59e0b, #d97706); border: none; border-radius: 8px; color: #000; font-family: var(--sans); font-weight: 700; font-size: 13px; letter-spacing: 0.08em; cursor: pointer; }
+
+    /* ── Runs tab ── */
+    .run-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; margin-bottom: 10px; border-left: 3px solid transparent; animation: fadeUp 0.3s ease both; }
+    .run-card.success { border-left-color: var(--green); }
+    .run-card.error { border-left-color: var(--red); }
+    .run-card.running { border-left-color: var(--yellow); }
+    .run-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .run-agent { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; color: #aaa; text-transform: uppercase; }
+    .run-status { font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; }
+    .run-status.success { color: var(--green); }
+    .run-status.error { color: var(--red); }
+    .run-status.running { color: var(--yellow); }
+    .run-meta { font-family: var(--mono); font-size: 10px; color: var(--faint); display: flex; gap: 14px; margin-bottom: 6px; }
+    .run-meta span { color: #555; }
+    .run-error { font-family: var(--mono); font-size: 10px; color: var(--red); margin-top: 6px; line-height: 1.5; word-break: break-word; }
+    .run-summary { font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+    /* ── Section header ── */
+    .section-head { font-family: var(--mono); font-size: 9px; letter-spacing: 0.2em; color: var(--faint); text-transform: uppercase; margin-bottom: 14px; margin-top: 4px; }
+
+    /* ── Animations ── */
+    @keyframes fadeUp { from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)} }
+    @keyframes fadeIn { from{opacity:0}to{opacity:1} }
+    @keyframes slideUp { from{transform:translateY(100%)}to{transform:translateY(0)} }
+    @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-top">
+      <span class="wordmark">Aleksandra</span>
+      <div class="status-dot" id="status-dot"></div>
+    </div>
+    <div class="date-line" id="date-line">—</div>
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-label">Pending</div>
+        <div class="stat-value amber" id="stat-pending">—</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Done today</div>
+        <div class="stat-value green" id="stat-done">—</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Agents</div>
+        <div class="stat-value" id="stat-agents">—</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" id="tab-briefing" onclick="switchTab('briefing')">
+      Briefing <span class="tab-badge" id="badge-pending" style="display:none">0</span>
+    </button>
+    <button class="tab" id="tab-runs" onclick="switchTab('runs')">
+      Runs <span class="tab-badge" id="badge-errors" style="display:none">!</span>
+    </button>
+  </div>
+
+  <!-- Content -->
+  <div class="content" id="content"></div>
+
+</div>
+
+<!-- Edit modal -->
+<div class="modal-overlay" id="modal" style="display:none" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Edit Draft</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <textarea class="modal-textarea" id="modal-text" placeholder="Edit the draft reply..."></textarea>
+    <button class="btn-send" onclick="submitEdit()">Send Edited Reply →</button>
+  </div>
+</div>
+
+<script>
+const SB_URL = 'https://ztgdtthdmosjvqpauzqw.supabase.co/rest/v1';
+const SB_KEY = 'sb_publishable_ZoTVAdhfEe5K6eKoNZV5DQ_jw3yI0MD';
+const H = { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
+
+let currentTab = 'briefing';
+let briefingItems = [];
+let agentRuns = [];
+let decisions = {};
+let editingItemId = null;
+
+async function q(table, params='', method='GET', body=null) {
+  const opts = { method, headers: H };
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch(`${SB_URL}/${table}?${params}`, opts);
+  if (!r.ok) throw new Error(`${table} ${r.status}`);
+  return method === 'GET' ? r.json() : r;
+}
+
+function timeAgo(ts) {
+  if (!ts) return '—';
+  const s = Math.floor((Date.now() - new Date(ts)) / 1000);
+  if (s < 60) return `${s}s ago`;
+  if (s < 3600) return `${Math.floor(s/60)}m ago`;
+  if (s < 86400) return `${Math.floor(s/3600)}h ago`;
+  return `${Math.floor(s/86400)}d ago`;
+}
+
+function formatDate() {
+  return new Date().toLocaleDateString('en-IE', { weekday:'long', day:'numeric', month:'long' });
+}
+
+function shortAgent(name='') {
+  return name.replace('aleksandra-','').replace('-agent','').toUpperCase();
+}
+
+// ── Load data ──────────────────────────────────────────────────
+async function loadAll() {
+  document.getElementById('status-dot').className = 'status-dot loading';
+  document.getElementById('date-line').textContent = formatDate();
+
+  try {
+    const [items, runs, decs] = await Promise.all([
+      q('briefing_items', 'order=created_at.desc&limit=30'),
+      q('agent_runs', 'order=started_at.desc&limit=20'),
+      q('decisions', 'order=created_at.desc&limit=50'),
+    ]);
+
+    briefingItems = items;
+    agentRuns = runs;
+    decisions = {};
+    decs.forEach(d => { decisions[d.briefing_item_id] = d; });
+
+    updateStats();
+    render();
+    document.getElementById('status-dot').className = 'status-dot';
+  } catch(e) {
+    document.getElementById('status-dot').className = 'status-dot';
+    document.getElementById('content').innerHTML = `<div class="empty-state"><div class="empty-state-icon">⚠</div><div class="empty-state-text">Could not load data<br>${e.message}</div></div>`;
+  }
+}
+
+function updateStats() {
+  const pending = briefingItems.filter(i => i.status === 'pending').length;
+  const done = Object.keys(decisions).length;
+  const uniqueAgents = new Set(agentRuns.map(r => r.agent)).size;
+  const hasErrors = agentRuns.some(r => r.status === 'error');
+
+  document.getElementById('stat-pending').textContent = pending;
+  document.getElementById('stat-done').textContent = done;
+  document.getElementById('stat-agents').textContent = uniqueAgents;
+
+  const badge = document.getElementById('badge-pending');
+  if (pending > 0) { badge.textContent = pending; badge.style.display = 'inline-block'; }
+  else badge.style.display = 'none';
+
+  const errBadge = document.getElementById('badge-errors');
+  errBadge.style.display = hasErrors ? 'inline-block' : 'none';
+}
+
+// ── Tabs ───────────────────────────────────────────────────────
+function switchTab(tab) {
+  currentTab = tab;
+  document.getElementById('tab-briefing').className = 'tab' + (tab === 'briefing' ? ' active' : '');
+  document.getElementById('tab-runs').className = 'tab' + (tab === 'runs' ? ' active' : '');
+  render();
+}
+
+function render() {
+  if (currentTab === 'briefing') renderBriefing();
+  else renderRuns();
+}
+
+// ── Briefing tab ───────────────────────────────────────────────
+function renderBriefing() {
+  const content = document.getElementById('content');
+  const pending = briefingItems.filter(i => i.status === 'pending');
+  const actioned = briefingItems.filter(i => i.status !== 'pending');
+
+  if (briefingItems.length === 0) {
+    content.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">🌙</div>
+        <div class="empty-state-text">No briefing items yet.<br>Agents run at 07:30–08:15 IST each morning.</div>
+      </div>`;
+    return;
+  }
+
+  let html = '';
+
+  if (pending.length > 0) {
+    html += `<div class="section-head">Pending · ${pending.length}</div>`;
+    pending.forEach(item => { html += renderItem(item, false); });
+  }
+
+  if (actioned.length > 0) {
+    html += `<div class="section-head" style="margin-top:24px">Actioned · ${actioned.length}</div>`;
+    actioned.forEach(item => { html += renderItem(item, true); });
+  }
+
+  content.innerHTML = html;
+}
+
+function renderItem(item, decided) {
+  const dec = decisions[item.id];
+  const priorityClass = item.priority ? `priority-${item.priority}` : 'priority-medium';
+  const priorityLabel = item.priority || 'medium';
+
+  let decBadge = '';
+  if (dec) {
+    const cls = dec.action === 'approved' ? 'decided-approved' : 'decided-rejected';
+    const icon = dec.action === 'approved' ? '✓' : '✗';
+    decBadge = `<div class="decided-badge ${cls}">${icon} ${dec.action}</div>`;
+  }
+
+  let draftHtml = '';
+  if (item.draft) {
+    draftHtml = `
+      <div class="item-draft">
+        <div class="item-draft-label">Draft Reply</div>
+        <div class="item-draft-text">${item.draft}</div>
+      </div>`;
+  }
+
+  let actions = '';
+  if (!dec) {
+    actions = `
+      <div class="item-actions">
+        <button class="btn btn-approve" onclick="decide('${item.id}', 'approved')">✓ Approve</button>
+        ${item.draft ? `<button class="btn btn-edit" onclick="openEdit('${item.id}')">Edit</button>` : ''}
+        <button class="btn btn-reject" onclick="decide('${item.id}', 'rejected')">✗ Reject</button>
+      </div>`;
+  }
+
+  return `
+    <div class="briefing-item ${decided ? 'item-decided' : ''}" id="item-${item.id}">
+      ${decBadge}
+      <div class="item-header">
+        <div class="item-meta-top">
+          <span class="item-agent">${shortAgent(item.agent)}</span>
+          ${item.type ? `<span class="item-type">${item.type}</span>` : ''}
+          <span class="priority-badge ${priorityClass}">${priorityLabel}</span>
+        </div>
+        <span style="font-family:var(--mono);font-size:9px;color:var(--faint)">${timeAgo(item.created_at)}</span>
+      </div>
+      <div class="item-title">${item.title || 'Untitled'}</div>
+      ${item.summary ? `<div class="item-summary">${item.summary}</div>` : ''}
+      ${draftHtml}
+      ${actions}
+    </div>`;
+}
+
+// ── Runs tab ───────────────────────────────────────────────────
+function renderRuns() {
+  const content = document.getElementById('content');
+
+  if (agentRuns.length === 0) {
+    content.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">⏳</div>
+        <div class="empty-state-text">No agent runs yet.<br>First run tomorrow at 07:30 IST.</div>
+      </div>`;
+    return;
+  }
+
+  content.innerHTML = `
+    <div class="section-head">Recent Agent Runs · ${agentRuns.length}</div>
+    ${agentRuns.map(run => `
+      <div class="run-card ${run.status || 'unknown'}">
+        <div class="run-header">
+          <span class="run-agent">${shortAgent(run.agent)}</span>
+          <span class="run-status ${run.status || 'unknown'}">${run.status || '—'}</span>
+        </div>
+        <div class="run-meta">
+          <span>${timeAgo(run.started_at)}</span>
+          ${run.duration_ms ? `<span>${(run.duration_ms/1000).toFixed(1)}s</span>` : ''}
+          ${run.items_created ? `<span>${run.items_created} items</span>` : ''}
+        </div>
+        ${run.error ? `<div class="run-error">${run.error}</div>` : ''}
+      </div>`).join('')}`;
+}
+
+// ── Actions ────────────────────────────────────────────────────
+async function decide(itemId, action) {
+  const item = briefingItems.find(i => i.id === itemId);
+  if (!item) return;
+
+  // Optimistic UI
+  item.status = action === 'approved' ? 'approved' : 'rejected';
+  decisions[itemId] = { action, briefing_item_id: itemId, created_at: new Date().toISOString() };
+  updateStats();
+  render();
+
+  try {
+    // Write decision
+    await q('decisions', '', 'POST', {
+      briefing_item_id: itemId,
+      action,
+      agent: item.agent,
+      original_draft: item.draft || null,
+    });
+    // Update briefing item status
+    await q(`briefing_items?id=eq.${itemId}`, '', 'PATCH', { status: action === 'approved' ? 'approved' : 'rejected' });
+  } catch(e) {
+    console.error('Decision failed:', e);
+  }
+}
+
+function openEdit(itemId) {
+  const item = briefingItems.find(i => i.id === itemId);
+  if (!item) return;
+  editingItemId = itemId;
+  document.getElementById('modal-text').value = item.draft || '';
+  document.getElementById('modal').style.display = 'flex';
+}
+
+function closeModal() {
+  document.getElementById('modal').style.display = 'none';
+  editingItemId = null;
+}
+
+async function submitEdit() {
+  if (!editingItemId) return;
+  const editedDraft = document.getElementById('modal-text').value;
+  const item = briefingItems.find(i => i.id === editingItemId);
+  if (!item) return;
+
+  item.status = 'approved';
+  decisions[editingItemId] = { action: 'approved', briefing_item_id: editingItemId, created_at: new Date().toISOString() };
+  closeModal();
+  updateStats();
+  render();
+
+  try {
+    await q('decisions', '', 'POST', {
+      briefing_item_id: editingItemId,
+      action: 'approved',
+      agent: item.agent,
+      original_draft: item.draft || null,
+      edited_draft: editedDraft,
+    });
+    await q(`briefing_items?id=eq.${editingItemId}`, '', 'PATCH', { status: 'approved', draft: editedDraft });
+  } catch(e) {
+    console.error('Edit failed:', e);
+  }
+}
+
+// ── Init ───────────────────────────────────────────────────────
+loadAll();
+// Refresh every 5 minutes
+setInterval(loadAll, 5 * 60 * 1000);
+</script>
+</body>
+</html>
