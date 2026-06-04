@@ -93,6 +93,7 @@
     .btn { flex: 1; padding: 11px; border-radius: 7px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; border: none; cursor: pointer; transition: all 0.15s; }
     .btn-approve { background: rgba(74,222,128,0.12); color: var(--green); border: 1px solid rgba(74,222,128,0.2); }
     .btn-approve:active { background: rgba(74,222,128,0.22); }
+    .btn-approve.sending { opacity: 0.6; pointer-events: none; }
     .btn-reject { background: rgba(248,113,113,0.08); color: var(--red); border: 1px solid rgba(248,113,113,0.15); }
     .btn-reject:active { background: rgba(248,113,113,0.18); }
     .btn-edit { background: transparent; color: var(--muted); border: 1px solid var(--border2); }
@@ -101,6 +102,20 @@
     .decided-badge { display: inline-flex; align-items: center; gap: 5px; font-family: var(--mono); font-size: 9px; padding: 4px 10px; border-radius: 4px; margin-bottom: 10px; }
     .decided-approved { background: rgba(74,222,128,0.08); color: var(--green); }
     .decided-rejected { background: rgba(248,113,113,0.08); color: var(--red); }
+    .decided-sent { background: rgba(96,165,250,0.10); color: var(--blue); }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%);
+      background: var(--surface2); border: 1px solid var(--border2);
+      color: var(--text); font-family: var(--mono); font-size: 11px;
+      padding: 10px 18px; border-radius: 8px;
+      animation: fadeUp 0.3s ease both;
+      z-index: 200; white-space: nowrap;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+    }
+    .toast.success { border-color: rgba(74,222,128,0.3); color: var(--green); }
+    .toast.error { border-color: rgba(248,113,113,0.3); color: var(--red); }
 
     /* ── Edit modal ── */
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; display: flex; align-items: flex-end; animation: fadeIn 0.2s ease; }
@@ -111,6 +126,7 @@
     .modal-textarea { width: 100%; background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; padding: 14px; color: #bbb; font-family: var(--mono); font-size: 12px; line-height: 1.7; resize: none; height: 180px; outline: none; margin-bottom: 14px; }
     .modal-textarea:focus { border-color: var(--amber); }
     .btn-send { width: 100%; padding: 14px; background: linear-gradient(135deg, #f59e0b, #d97706); border: none; border-radius: 8px; color: #000; font-family: var(--sans); font-weight: 700; font-size: 13px; letter-spacing: 0.08em; cursor: pointer; }
+    .btn-send:disabled { opacity: 0.5; pointer-events: none; }
 
     /* ── Runs tab ── */
     .run-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; margin-bottom: 10px; border-left: 3px solid transparent; animation: fadeUp 0.3s ease both; }
@@ -126,7 +142,6 @@
     .run-meta { font-family: var(--mono); font-size: 10px; color: var(--faint); display: flex; gap: 14px; margin-bottom: 6px; }
     .run-meta span { color: #555; }
     .run-error { font-family: var(--mono); font-size: 10px; color: var(--red); margin-top: 6px; line-height: 1.5; word-break: break-word; }
-    .run-summary { font-size: 13px; color: var(--muted); margin-top: 4px; }
 
     /* ── Section header ── */
     .section-head { font-family: var(--mono); font-size: 9px; letter-spacing: 0.2em; color: var(--faint); text-transform: uppercase; margin-bottom: 14px; margin-top: 4px; }
@@ -187,7 +202,7 @@
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
     <textarea class="modal-textarea" id="modal-text" placeholder="Edit the draft reply..."></textarea>
-    <button class="btn-send" onclick="submitEdit()">Send Edited Reply →</button>
+    <button class="btn-send" id="btn-send-modal" onclick="submitEdit()">Send Edited Reply →</button>
   </div>
 </div>
 
@@ -235,6 +250,17 @@ const AGENT_NAMES = {
 };
 function shortAgent(name='') {
   return AGENT_NAMES[name] || name.replace('aleksandra-','').replace('-agent','').toUpperCase();
+}
+
+// ── Toast ──────────────────────────────────────────────────────────────
+function showToast(msg, type='') {
+  const existing = document.querySelector('.toast');
+  if (existing) existing.remove();
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 3000);
 }
 
 // ── Load data ──────────────────────────────────────────────────
@@ -328,12 +354,17 @@ function renderItem(item, decided) {
   const dec = decisions[item.id];
   const priorityClass = item.priority ? `priority-${item.priority}` : 'priority-medium';
   const priorityLabel = item.priority || 'medium';
+  const isEmailDraft = item.type === 'draft' && !!item.draft;
 
   let decBadge = '';
   if (dec) {
-    const cls = dec.action === 'approved' ? 'decided-approved' : 'decided-rejected';
-    const icon = dec.action === 'approved' ? '✓' : '✗';
-    decBadge = `<div class="decided-badge ${cls}">${icon} ${dec.action}</div>`;
+    if (dec.action === 'approved' && isEmailDraft) {
+      decBadge = `<div class="decided-badge decided-sent">✉ sent</div>`;
+    } else if (dec.action === 'approved') {
+      decBadge = `<div class="decided-badge decided-approved">✓ approved</div>`;
+    } else {
+      decBadge = `<div class="decided-badge decided-rejected">✗ rejected</div>`;
+    }
   }
 
   let draftHtml = '';
@@ -347,9 +378,10 @@ function renderItem(item, decided) {
 
   let actions = '';
   if (!dec) {
+    const approveLabel = isEmailDraft ? '✉ Send' : '✓ Approve';
     actions = `
       <div class="item-actions">
-        <button class="btn btn-approve" onclick="decide('${item.id}', 'approved')">✓ Approve</button>
+        <button class="btn btn-approve" id="approve-btn-${item.id}" onclick="decide('${item.id}', 'approved')">${approveLabel}</button>
         ${item.draft ? `<button class="btn btn-edit" onclick="openEdit('${item.id}')">Edit</button>` : ''}
         <button class="btn btn-reject" onclick="decide('${item.id}', 'rejected')">✗ Reject</button>
       </div>`;
@@ -408,24 +440,75 @@ async function decide(itemId, action) {
   const item = briefingItems.find(i => i.id === itemId);
   if (!item) return;
 
-  // Optimistic UI
+  const isEmailDraft = item.type === 'draft' && !!item.draft;
+
+  // For email drafts being approved, trigger send flow
+  if (action === 'approved' && isEmailDraft) {
+    await sendAndDecide(itemId, null);
+    return;
+  }
+
+  // Non-email or reject: optimistic update + Supabase write
   item.status = action === 'approved' ? 'approved' : 'rejected';
   decisions[itemId] = { action, briefing_item_id: itemId, created_at: new Date().toISOString() };
   updateStats();
   render();
 
   try {
-    // Write decision
     await q('decisions', '', 'POST', {
       briefing_item_id: itemId,
       action,
       agent: item.agent,
       original_draft: item.draft || null,
     });
-    // Update briefing item status
     await q(`briefing_items?id=eq.${itemId}`, '', 'PATCH', { status: action === 'approved' ? 'approved' : 'rejected' });
   } catch(e) {
     console.error('Decision failed:', e);
+  }
+}
+
+async function sendAndDecide(itemId, editedDraft) {
+  const item = briefingItems.find(i => i.id === itemId);
+  if (!item) return;
+
+  // Optimistic UI — show sending state
+  const btn = document.getElementById(`approve-btn-${itemId}`);
+  if (btn) { btn.textContent = 'Sending…'; btn.classList.add('sending'); }
+
+  try {
+    const res = await fetch('/api/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ briefingItemId: itemId, editedDraft: editedDraft || null }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Send failed');
+    }
+
+    // Mark as approved + write decision
+    item.status = 'approved';
+    decisions[itemId] = { action: 'approved', briefing_item_id: itemId, created_at: new Date().toISOString() };
+
+    await q('decisions', '', 'POST', {
+      briefing_item_id: itemId,
+      action: 'approved',
+      agent: item.agent,
+      original_draft: item.draft || null,
+      edited_draft: editedDraft || null,
+    });
+    await q(`briefing_items?id=eq.${itemId}`, '', 'PATCH', { status: 'approved' });
+
+    updateStats();
+    render();
+    showToast('✉ Sent', 'success');
+
+  } catch(e) {
+    console.error('Send failed:', e);
+    showToast(`Send failed: ${e.message}`, 'error');
+    // Restore button
+    if (btn) { btn.textContent = '✉ Send'; btn.classList.remove('sending'); }
   }
 }
 
@@ -433,13 +516,18 @@ function openEdit(itemId) {
   const item = briefingItems.find(i => i.id === itemId);
   if (!item) return;
   editingItemId = itemId;
-  document.getElementById('modal-text').value = item.draft || '';
+  // Strip signature for editing — user edits body only
+  const sigPlain = '\n\nGerrit Högemann\n@: gerrithogemann@gmail.com\n✆: +353 89 240 5889';
+  const bodyOnly = (item.draft || '').replace(sigPlain, '').trimEnd();
+  document.getElementById('modal-text').value = bodyOnly;
   document.getElementById('modal').style.display = 'flex';
 }
 
 function closeModal() {
   document.getElementById('modal').style.display = 'none';
   editingItemId = null;
+  const btn = document.getElementById('btn-send-modal');
+  if (btn) { btn.textContent = 'Send Edited Reply →'; btn.disabled = false; }
 }
 
 async function submitEdit() {
@@ -448,29 +536,18 @@ async function submitEdit() {
   const item = briefingItems.find(i => i.id === editingItemId);
   if (!item) return;
 
-  item.status = 'approved';
-  decisions[editingItemId] = { action: 'approved', briefing_item_id: editingItemId, created_at: new Date().toISOString() };
-  closeModal();
-  updateStats();
-  render();
+  const btn = document.getElementById('btn-send-modal');
+  btn.textContent = 'Sending…';
+  btn.disabled = true;
 
-  try {
-    await q('decisions', '', 'POST', {
-      briefing_item_id: editingItemId,
-      action: 'approved',
-      agent: item.agent,
-      original_draft: item.draft || null,
-      edited_draft: editedDraft,
-    });
-    await q(`briefing_items?id=eq.${editingItemId}`, '', 'PATCH', { status: 'approved', draft: editedDraft });
-  } catch(e) {
-    console.error('Edit failed:', e);
-  }
+  const itemId = editingItemId;
+  closeModal();
+
+  await sendAndDecide(itemId, editedDraft);
 }
 
 // ── Init ───────────────────────────────────────────────────────
 loadAll();
-// Refresh every 5 minutes
 setInterval(loadAll, 5 * 60 * 1000);
 </script>
 </body>
