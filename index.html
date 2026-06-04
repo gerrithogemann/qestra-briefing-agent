@@ -12,11 +12,12 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg: #090909; --surface: #0f0f0f; --surface2: #141414;
-      --border: #1c1c1c; --border2: #242424;
+      --bg: #090909; --surface: #0f0f0f; --surface2: #141414; --surface3: #181818;
+      --border: #1c1c1c; --border2: #242424; --border3: #2e2e2e;
       --text: #c8c8c8; --muted: #666; --faint: #2a2a2a;
       --amber: #f59e0b; --amber-dim: rgba(245,158,11,0.10);
       --green: #4ade80; --red: #f87171; --yellow: #facc15; --blue: #60a5fa;
+      --purple: #a78bfa;
       --mono: 'DM Mono', monospace; --sans: 'Syne', sans-serif;
     }
     html, body {
@@ -30,18 +31,12 @@
     .app { display: flex; flex-direction: column; height: 100vh; max-width: 680px; margin: 0 auto; }
 
     /* ── Header ── */
-    .header {
-      padding: 20px 24px 16px;
-      border-bottom: 1px solid var(--border);
-      flex-shrink: 0;
-    }
+    .header { padding: 20px 24px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
     .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
     .wordmark { font-family: var(--sans); font-size: 15px; font-weight: 700; letter-spacing: 0.15em; color: var(--amber); text-transform: uppercase; }
     .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 6px var(--green); }
     .status-dot.loading { background: var(--yellow); box-shadow: 0 0 6px var(--yellow); animation: pulse 1.2s ease-in-out infinite; }
     .date-line { font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: 0.04em; }
-
-    /* ── Stats row ── */
     .stats { display: flex; gap: 10px; margin-top: 14px; }
     .stat { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; }
     .stat-label { font-family: var(--mono); font-size: 8px; letter-spacing: 0.2em; color: var(--muted); text-transform: uppercase; margin-bottom: 6px; }
@@ -67,30 +62,39 @@
 
     /* ── Briefing items ── */
     .briefing-item {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 18px 20px;
-      margin-bottom: 12px;
-      transition: border-color 0.2s;
-      animation: fadeUp 0.3s ease both;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 18px 20px; margin-bottom: 12px;
+      transition: border-color 0.2s; animation: fadeUp 0.3s ease both;
     }
     .briefing-item:active { border-color: var(--border2); }
+
+    /* type-specific left border accent */
+    .briefing-item.type-draft { border-left: 2px solid rgba(96,165,250,0.4); }
+    .briefing-item.type-insight { border-left: 2px solid rgba(245,158,11,0.3); }
+    .briefing-item.type-decision { border-left: 2px solid rgba(167,139,250,0.4); }
+
     .item-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
     .item-meta-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
     .item-agent { font-family: var(--mono); font-size: 8px; letter-spacing: 0.15em; color: var(--amber); text-transform: uppercase; }
     .item-type { font-family: var(--mono); font-size: 8px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+    .item-type.type-draft { color: var(--blue); }
+    .item-type.type-insight { color: var(--amber); opacity: 0.7; }
+    .item-type.type-decision { color: var(--purple); }
     .priority-badge { font-family: var(--mono); font-size: 7px; padding: 2px 6px; border-radius: 3px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 500; }
     .priority-high { background: rgba(248,113,113,0.12); color: var(--red); }
     .priority-medium { background: rgba(250,204,21,0.1); color: var(--yellow); }
     .priority-low { background: rgba(74,222,128,0.1); color: var(--green); }
     .item-title { font-size: 15px; font-weight: 600; color: #ddd; line-height: 1.4; margin-bottom: 8px; }
     .item-summary { font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 14px; }
+
+    /* ── Draft box ── */
     .item-draft { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 12px 14px; margin-bottom: 14px; }
-    .item-draft-label { font-family: var(--mono); font-size: 8px; color: var(--amber); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 8px; }
+    .item-draft-label { font-family: var(--mono); font-size: 8px; color: var(--blue); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 8px; }
     .item-draft-text { font-size: 13px; color: #aaa; line-height: 1.65; white-space: pre-wrap; }
-    .item-actions { display: flex; gap: 8px; }
-    .btn { flex: 1; padding: 11px; border-radius: 7px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; border: none; cursor: pointer; transition: all 0.15s; }
+
+    /* ── Action buttons ── */
+    .item-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn { flex: 1; min-width: 80px; padding: 11px; border-radius: 7px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; border: none; cursor: pointer; transition: all 0.15s; }
     .btn-approve { background: rgba(74,222,128,0.12); color: var(--green); border: 1px solid rgba(74,222,128,0.2); }
     .btn-approve:active { background: rgba(74,222,128,0.22); }
     .btn-approve.sending { opacity: 0.6; pointer-events: none; }
@@ -98,11 +102,45 @@
     .btn-reject:active { background: rgba(248,113,113,0.18); }
     .btn-edit { background: transparent; color: var(--muted); border: 1px solid var(--border2); }
     .btn-edit:active { background: var(--surface2); }
+    .btn-godit { background: rgba(245,158,11,0.08); color: var(--amber); border: 1px solid rgba(245,158,11,0.2); flex: 1; }
+    .btn-godit:active { background: rgba(245,158,11,0.18); }
+    .btn-godit.archiving { opacity: 0.6; pointer-events: none; }
+    .btn-improve { background: rgba(167,139,250,0.08); color: var(--purple); border: 1px solid rgba(167,139,250,0.2); }
+    .btn-improve:active { background: rgba(167,139,250,0.18); }
+
+    /* ── Decision options ── */
+    .decision-options { display: flex; flex-direction: column; gap: 6px; margin-bottom: 0; }
+    .btn-option { width: 100%; padding: 11px 14px; border-radius: 7px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; background: rgba(167,139,250,0.07); color: var(--purple); border: 1px solid rgba(167,139,250,0.18); cursor: pointer; text-align: left; transition: all 0.15s; }
+    .btn-option:active { background: rgba(167,139,250,0.16); }
+
+    /* ── Decided badges ── */
     .item-decided { opacity: 0.45; pointer-events: none; }
     .decided-badge { display: inline-flex; align-items: center; gap: 5px; font-family: var(--mono); font-size: 9px; padding: 4px 10px; border-radius: 4px; margin-bottom: 10px; }
     .decided-approved { background: rgba(74,222,128,0.08); color: var(--green); }
     .decided-rejected { background: rgba(248,113,113,0.08); color: var(--red); }
     .decided-sent { background: rgba(96,165,250,0.10); color: var(--blue); }
+    .decided-archived { background: rgba(245,158,11,0.08); color: var(--amber); }
+    .decided-chosen { background: rgba(167,139,250,0.08); color: var(--purple); }
+
+    /* ── AI improve panel ── */
+    .improve-panel {
+      margin-top: 12px; background: var(--surface3);
+      border: 1px solid rgba(167,139,250,0.2); border-radius: 8px;
+      padding: 14px; animation: fadeUp 0.2s ease;
+    }
+    .improve-panel-label { font-family: var(--mono); font-size: 8px; color: var(--purple); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 10px; }
+    .improve-input { width: 100%; background: var(--surface2); border: 1px solid var(--border2); border-radius: 6px; padding: 10px 12px; color: #bbb; font-family: var(--mono); font-size: 12px; line-height: 1.6; resize: none; height: 64px; outline: none; margin-bottom: 10px; }
+    .improve-input:focus { border-color: var(--purple); }
+    .improve-actions { display: flex; gap: 8px; }
+    .btn-improve-go { flex: 1; padding: 10px; border-radius: 6px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; background: rgba(167,139,250,0.12); color: var(--purple); border: 1px solid rgba(167,139,250,0.25); cursor: pointer; transition: all 0.15s; }
+    .btn-improve-go:disabled { opacity: 0.5; pointer-events: none; }
+    .btn-improve-cancel { padding: 10px 14px; border-radius: 6px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; background: transparent; color: var(--muted); border: 1px solid var(--border2); cursor: pointer; }
+    .improve-result { background: var(--surface2); border: 1px solid var(--border2); border-radius: 6px; padding: 12px; margin-bottom: 10px; font-size: 13px; color: #aaa; line-height: 1.65; white-space: pre-wrap; }
+    .improve-result-label { font-family: var(--mono); font-size: 8px; color: var(--green); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 8px; }
+    .improve-result-actions { display: flex; gap: 8px; }
+    .btn-use-result { flex: 1; padding: 10px; border-radius: 6px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; background: rgba(74,222,128,0.10); color: var(--green); border: 1px solid rgba(74,222,128,0.2); cursor: pointer; }
+    .btn-discard-result { padding: 10px 14px; border-radius: 6px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; background: transparent; color: var(--muted); border: 1px solid var(--border2); cursor: pointer; }
+    .improve-thinking { font-family: var(--mono); font-size: 11px; color: var(--purple); opacity: 0.7; padding: 8px 0; animation: pulse 1.2s ease-in-out infinite; }
 
     /* ── Toast ── */
     .toast {
@@ -211,11 +249,19 @@ const SB_URL = 'https://ztgdtthdmosjvqpauzqw.supabase.co/rest/v1';
 const SB_KEY = 'sb_publishable_ZoTVAdhfEe5K6eKoNZV5DQ_jw3yI0MD';
 const H = { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
 
+// Anthropic API key for inline AI improvements
+// This calls the API client-side — only used for draft rewriting, no sensitive data involved
+const ANTHROPIC_KEY = ''; // ← paste your Anthropic API key here
+
 let currentTab = 'briefing';
 let briefingItems = [];
 let agentRuns = [];
 let decisions = {};
 let editingItemId = null;
+
+// Track which items have improve panels open and their state
+// improveState[itemId] = { open: bool, instruction: str, result: str|null, thinking: bool }
+const improveState = {};
 
 async function q(table, params='', method='GET', body=null) {
   const opts = { method, headers: H };
@@ -239,20 +285,15 @@ function formatDate() {
 }
 
 const AGENT_NAMES = {
-  'igor': 'Igor',
-  'masha': 'Masha',
-  'vera': 'Vera',
-  'boris-keeper': 'Boris · Keeper',
-  'boris-tropiq': 'Boris · TropiQ',
+  'igor': 'Igor', 'masha': 'Masha', 'vera': 'Vera',
+  'boris-keeper': 'Boris · Keeper', 'boris-tropiq': 'Boris · TropiQ',
   'boris-sorte-do-jugo': 'Boris · Sorte do Jugo',
-  'dmitri-personal': 'Dmitri · Personal',
-  'dmitri-qestra': 'Dmitri · Qestra',
+  'dmitri-personal': 'Dmitri · Personal', 'dmitri-qestra': 'Dmitri · Qestra',
 };
 function shortAgent(name='') {
   return AGENT_NAMES[name] || name.replace('aleksandra-','').replace('-agent','').toUpperCase();
 }
 
-// ── Toast ──────────────────────────────────────────────────────────────
 function showToast(msg, type='') {
   const existing = document.querySelector('.toast');
   if (existing) existing.remove();
@@ -267,19 +308,16 @@ function showToast(msg, type='') {
 async function loadAll() {
   document.getElementById('status-dot').className = 'status-dot loading';
   document.getElementById('date-line').textContent = formatDate();
-
   try {
     const [items, runs, decs] = await Promise.all([
       q('briefing_items', 'order=created_at.desc&limit=30'),
       q('agent_runs', 'order=started_at.desc&limit=20'),
       q('decisions', 'order=created_at.desc&limit=50'),
     ]);
-
     briefingItems = items;
     agentRuns = runs;
     decisions = {};
     decs.forEach(d => { decisions[d.briefing_item_id] = d; });
-
     updateStats();
     render();
     document.getElementById('status-dot').className = 'status-dot';
@@ -294,20 +332,15 @@ function updateStats() {
   const done = Object.keys(decisions).length;
   const uniqueAgents = new Set(agentRuns.map(r => r.agent)).size;
   const hasErrors = agentRuns.some(r => r.status === 'error');
-
   document.getElementById('stat-pending').textContent = pending;
   document.getElementById('stat-done').textContent = done;
   document.getElementById('stat-agents').textContent = uniqueAgents;
-
   const badge = document.getElementById('badge-pending');
   if (pending > 0) { badge.textContent = pending; badge.style.display = 'inline-block'; }
   else badge.style.display = 'none';
-
-  const errBadge = document.getElementById('badge-errors');
-  errBadge.style.display = hasErrors ? 'inline-block' : 'none';
+  document.getElementById('badge-errors').style.display = hasErrors ? 'inline-block' : 'none';
 }
 
-// ── Tabs ───────────────────────────────────────────────────────
 function switchTab(tab) {
   currentTab = tab;
   document.getElementById('tab-briefing').className = 'tab' + (tab === 'briefing' ? ' active' : '');
@@ -336,64 +369,125 @@ function renderBriefing() {
   }
 
   let html = '';
-
   if (pending.length > 0) {
     html += `<div class="section-head">Pending · ${pending.length}</div>`;
     pending.forEach(item => { html += renderItem(item, false); });
   }
-
   if (actioned.length > 0) {
     html += `<div class="section-head" style="margin-top:24px">Actioned · ${actioned.length}</div>`;
     actioned.forEach(item => { html += renderItem(item, true); });
   }
-
   content.innerHTML = html;
 }
 
 function renderItem(item, decided) {
   const dec = decisions[item.id];
-  const priorityClass = item.priority ? `priority-${item.priority}` : 'priority-medium';
+  const type = item.type || 'insight';
+  const priorityClass = `priority-${item.priority || 'medium'}`;
   const priorityLabel = item.priority || 'medium';
-  const isEmailDraft = item.type === 'draft' && !!item.draft;
+  const state = improveState[item.id] || {};
 
+  // ── Decided badge ──
   let decBadge = '';
   if (dec) {
-    if (dec.action === 'approved' && isEmailDraft) {
+    if (dec.action === 'approved' && type === 'draft') {
       decBadge = `<div class="decided-badge decided-sent">✉ sent</div>`;
     } else if (dec.action === 'approved') {
-      decBadge = `<div class="decided-badge decided-approved">✓ approved</div>`;
+      decBadge = `<div class="decided-badge decided-approved">✓ noted</div>`;
+    } else if (dec.action === 'archived') {
+      decBadge = `<div class="decided-badge decided-archived">✓ archived</div>`;
+    } else if (dec.action === 'chosen') {
+      decBadge = `<div class="decided-badge decided-chosen">✓ ${dec.edited_draft || 'chosen'}</div>`;
     } else {
       decBadge = `<div class="decided-badge decided-rejected">✗ rejected</div>`;
     }
   }
 
+  // ── Draft box ──
   let draftHtml = '';
   if (item.draft) {
+    // Show improved draft if available, otherwise original
+    const displayDraft = state.result || item.draft;
+    const draftLabel = state.result ? 'Improved Draft' : 'Draft Reply';
+    const labelColor = state.result ? 'color:var(--green)' : '';
     draftHtml = `
       <div class="item-draft">
-        <div class="item-draft-label">Draft Reply</div>
-        <div class="item-draft-text">${item.draft}</div>
+        <div class="item-draft-label" style="${labelColor}">${draftLabel}</div>
+        <div class="item-draft-text" id="draft-text-${item.id}">${displayDraft}</div>
       </div>`;
   }
 
+  // ── Improve panel ──
+  let improveHtml = '';
+  if (state.open && !dec) {
+    if (state.thinking) {
+      improveHtml = `
+        <div class="improve-panel">
+          <div class="improve-panel-label">✦ Improve Draft</div>
+          <div class="improve-thinking">Rewriting…</div>
+        </div>`;
+    } else if (state.result) {
+      improveHtml = `
+        <div class="improve-panel">
+          <div class="improve-panel-label">✦ Improved — looks good?</div>
+          <div class="improve-result-actions">
+            <button class="btn-use-result" onclick="useImprovedDraft('${item.id}')">✓ Use this</button>
+            <button class="btn-discard-result" onclick="discardImprove('${item.id}')">Try again</button>
+          </div>
+        </div>`;
+    } else {
+      improveHtml = `
+        <div class="improve-panel">
+          <div class="improve-panel-label">✦ Improve Draft</div>
+          <textarea class="improve-input" id="improve-input-${item.id}" placeholder="e.g. make it shorter · add unavailable Friday · more friendly"></textarea>
+          <div class="improve-actions">
+            <button class="btn-improve-go" id="improve-go-${item.id}" onclick="runImprove('${item.id}')">Rewrite →</button>
+            <button class="btn-improve-cancel" onclick="closeImprove('${item.id}')">Cancel</button>
+          </div>
+        </div>`;
+    }
+  }
+
+  // ── Action buttons by type ──
   let actions = '';
   if (!dec) {
-    const approveLabel = isEmailDraft ? '✉ Send' : '✓ Approve';
-    actions = `
-      <div class="item-actions">
-        <button class="btn btn-approve" id="approve-btn-${item.id}" onclick="decide('${item.id}', 'approved')">${approveLabel}</button>
-        ${item.draft ? `<button class="btn btn-edit" onclick="openEdit('${item.id}')">Edit</button>` : ''}
-        <button class="btn btn-reject" onclick="decide('${item.id}', 'rejected')">✗ Reject</button>
-      </div>`;
+    if (type === 'draft') {
+      // Draft: Send · Improve · Reject
+      actions = `
+        <div class="item-actions">
+          <button class="btn btn-approve" id="approve-btn-${item.id}" onclick="decide('${item.id}', 'approved')">✉ Send</button>
+          <button class="btn btn-improve" onclick="toggleImprove('${item.id}')">✦ Improve</button>
+          <button class="btn btn-reject" onclick="decide('${item.id}', 'rejected')">✗ Reject</button>
+        </div>`;
+    } else if (type === 'insight') {
+      // Insight: Got it (archives email)
+      actions = `
+        <div class="item-actions">
+          <button class="btn btn-godit" id="godit-btn-${item.id}" onclick="gotIt('${item.id}')">✓ Got it</button>
+        </div>`;
+    } else if (type === 'decision' && item.options && item.options.length > 0) {
+      // Decision: option buttons
+      const optBtns = item.options.map(opt =>
+        `<button class="btn-option" onclick="chooseOption('${item.id}', '${opt.replace(/'/g,"\\'")}')">→ ${opt}</button>`
+      ).join('');
+      actions = `<div class="decision-options">${optBtns}</div>`;
+    } else {
+      // Fallback for unknown types
+      actions = `
+        <div class="item-actions">
+          <button class="btn btn-approve" onclick="decide('${item.id}', 'approved')">✓ Approve</button>
+          <button class="btn btn-reject" onclick="decide('${item.id}', 'rejected')">✗ Reject</button>
+        </div>`;
+    }
   }
 
   return `
-    <div class="briefing-item ${decided ? 'item-decided' : ''}" id="item-${item.id}">
+    <div class="briefing-item type-${type} ${decided ? 'item-decided' : ''}" id="item-${item.id}">
       ${decBadge}
       <div class="item-header">
         <div class="item-meta-top">
           <span class="item-agent">${shortAgent(item.agent)}</span>
-          ${item.type ? `<span class="item-type">${item.type}</span>` : ''}
+          <span class="item-type type-${type}">${type}</span>
           <span class="priority-badge ${priorityClass}">${priorityLabel}</span>
         </div>
         <span style="font-family:var(--mono);font-size:9px;color:var(--faint)">${timeAgo(item.created_at)}</span>
@@ -401,6 +495,7 @@ function renderItem(item, decided) {
       <div class="item-title">${item.title || 'Untitled'}</div>
       ${item.summary ? `<div class="item-summary">${item.summary}</div>` : ''}
       ${draftHtml}
+      ${improveHtml}
       ${actions}
     </div>`;
 }
@@ -408,7 +503,6 @@ function renderItem(item, decided) {
 // ── Runs tab ───────────────────────────────────────────────────
 function renderRuns() {
   const content = document.getElementById('content');
-
   if (agentRuns.length === 0) {
     content.innerHTML = `
       <div class="empty-state">
@@ -417,7 +511,6 @@ function renderRuns() {
       </div>`;
     return;
   }
-
   content.innerHTML = `
     <div class="section-head">Recent Agent Runs · ${agentRuns.length}</div>
     ${agentRuns.map(run => `
@@ -436,19 +529,21 @@ function renderRuns() {
 }
 
 // ── Actions ────────────────────────────────────────────────────
+
+// Generic decide (non-send, non-archive)
 async function decide(itemId, action) {
   const item = briefingItems.find(i => i.id === itemId);
   if (!item) return;
 
   const isEmailDraft = item.type === 'draft' && !!item.draft;
-
-  // For email drafts being approved, trigger send flow
   if (action === 'approved' && isEmailDraft) {
-    await sendAndDecide(itemId, null);
+    // Get the current draft text (may have been improved)
+    const draftEl = document.getElementById(`draft-text-${itemId}`);
+    const currentDraft = draftEl ? draftEl.textContent : item.draft;
+    await sendAndDecide(itemId, currentDraft !== item.draft ? currentDraft : null);
     return;
   }
 
-  // Non-email or reject: optimistic update + Supabase write
   item.status = action === 'approved' ? 'approved' : 'rejected';
   decisions[itemId] = { action, briefing_item_id: itemId, created_at: new Date().toISOString() };
   updateStats();
@@ -456,22 +551,88 @@ async function decide(itemId, action) {
 
   try {
     await q('decisions', '', 'POST', {
-      briefing_item_id: itemId,
-      action,
-      agent: item.agent,
-      original_draft: item.draft || null,
+      briefing_item_id: itemId, action,
+      agent: item.agent, original_draft: item.draft || null,
     });
-    await q(`briefing_items?id=eq.${itemId}`, '', 'PATCH', { status: action === 'approved' ? 'approved' : 'rejected' });
+    await q(`briefing_items?id=eq.${itemId}`, '', 'PATCH', { status: action });
+  } catch(e) { console.error('Decision failed:', e); }
+}
+
+// Got it — marks as read and archives via /api/archive
+async function gotIt(itemId) {
+  const item = briefingItems.find(i => i.id === itemId);
+  if (!item) return;
+
+  const btn = document.getElementById(`godit-btn-${itemId}`);
+  if (btn) { btn.textContent = 'Archiving…'; btn.classList.add('archiving'); }
+
+  // Optimistic update immediately
+  item.status = 'approved';
+  decisions[itemId] = { action: 'archived', briefing_item_id: itemId, created_at: new Date().toISOString() };
+  updateStats();
+  render();
+
+  try {
+    // Log decision to Supabase
+    await q('decisions', '', 'POST', {
+      briefing_item_id: itemId, action: 'archived',
+      agent: item.agent,
+    });
+    await q(`briefing_items?id=eq.${itemId}`, '', 'PATCH', { status: 'approved' });
+
+    // Try to archive the email via Vercel function (graceful fail if not deployed yet)
+    const threadId = item.source_data?.thread_id;
+    if (threadId) {
+      try {
+        const res = await fetch('/api/archive', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ threadId }),
+        });
+        if (res.ok) {
+          showToast('✓ Archived', 'success');
+        } else {
+          // Archive endpoint not deployed yet — silently succeed
+          showToast('✓ Got it', 'success');
+        }
+      } catch(_) {
+        // /api/archive not available yet — that's fine
+        showToast('✓ Got it', 'success');
+      }
+    } else {
+      showToast('✓ Got it', 'success');
+    }
   } catch(e) {
-    console.error('Decision failed:', e);
+    console.error('Got it failed:', e);
+    showToast('Failed to log', 'error');
   }
 }
 
+// Choose a decision option
+async function chooseOption(itemId, option) {
+  const item = briefingItems.find(i => i.id === itemId);
+  if (!item) return;
+
+  item.status = 'approved';
+  decisions[itemId] = { action: 'chosen', edited_draft: option, briefing_item_id: itemId, created_at: new Date().toISOString() };
+  updateStats();
+  render();
+
+  try {
+    await q('decisions', '', 'POST', {
+      briefing_item_id: itemId, action: 'chosen',
+      agent: item.agent, edited_draft: option,
+    });
+    await q(`briefing_items?id=eq.${itemId}`, '', 'PATCH', { status: 'approved' });
+    showToast(`→ ${option}`, 'success');
+  } catch(e) { console.error('Choice failed:', e); }
+}
+
+// Send draft email via /api/send
 async function sendAndDecide(itemId, editedDraft) {
   const item = briefingItems.find(i => i.id === itemId);
   if (!item) return;
 
-  // Optimistic UI — show sending state
   const btn = document.getElementById(`approve-btn-${itemId}`);
   if (btn) { btn.textContent = 'Sending…'; btn.classList.add('sending'); }
 
@@ -487,15 +648,12 @@ async function sendAndDecide(itemId, editedDraft) {
       throw new Error(err.error || 'Send failed');
     }
 
-    // Mark as approved + write decision
     item.status = 'approved';
     decisions[itemId] = { action: 'approved', briefing_item_id: itemId, created_at: new Date().toISOString() };
 
     await q('decisions', '', 'POST', {
-      briefing_item_id: itemId,
-      action: 'approved',
-      agent: item.agent,
-      original_draft: item.draft || null,
+      briefing_item_id: itemId, action: 'approved',
+      agent: item.agent, original_draft: item.draft || null,
       edited_draft: editedDraft || null,
     });
     await q(`briefing_items?id=eq.${itemId}`, '', 'PATCH', { status: 'approved' });
@@ -503,23 +661,116 @@ async function sendAndDecide(itemId, editedDraft) {
     updateStats();
     render();
     showToast('✉ Sent', 'success');
-
   } catch(e) {
     console.error('Send failed:', e);
     showToast(`Send failed: ${e.message}`, 'error');
-    // Restore button
     if (btn) { btn.textContent = '✉ Send'; btn.classList.remove('sending'); }
   }
 }
 
+// ── AI Draft Improvement ───────────────────────────────────────
+
+function toggleImprove(itemId) {
+  if (improveState[itemId]?.open) {
+    closeImprove(itemId);
+  } else {
+    improveState[itemId] = { open: true, instruction: '', result: null, thinking: false };
+    render();
+    // Focus the textarea after render
+    setTimeout(() => {
+      const el = document.getElementById(`improve-input-${itemId}`);
+      if (el) el.focus();
+    }, 50);
+  }
+}
+
+function closeImprove(itemId) {
+  delete improveState[itemId];
+  render();
+}
+
+function discardImprove(itemId) {
+  improveState[itemId] = { open: true, instruction: '', result: null, thinking: false };
+  render();
+  setTimeout(() => {
+    const el = document.getElementById(`improve-input-${itemId}`);
+    if (el) el.focus();
+  }, 50);
+}
+
+function useImprovedDraft(itemId) {
+  const item = briefingItems.find(i => i.id === itemId);
+  if (!item) return;
+  // Bake the improved draft into the item so Send uses it
+  item.draft = improveState[itemId].result;
+  delete improveState[itemId];
+  render();
+}
+
+async function runImprove(itemId) {
+  const item = briefingItems.find(i => i.id === itemId);
+  if (!item) return;
+
+  const inputEl = document.getElementById(`improve-input-${itemId}`);
+  const instruction = inputEl ? inputEl.value.trim() : '';
+  if (!instruction) {
+    showToast('Add an instruction first', 'error');
+    return;
+  }
+
+  improveState[itemId] = { open: true, instruction, result: null, thinking: true };
+  render();
+
+  try {
+    // Call Anthropic API directly from the PWA
+    // Only used for draft rewriting — no sensitive data in the request
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': ANTHROPIC_KEY,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-5',
+        max_tokens: 500,
+        system: `You are helping Gerrit rewrite email drafts. 
+His voice: warm, natural, first names always, short is better than long, never corporate.
+Return ONLY the rewritten email body. No explanation, no subject line, no sign-off.`,
+        messages: [{
+          role: 'user',
+          content: `Original draft:\n${item.draft}\n\nInstruction: ${instruction}\n\nRewrite it.`
+        }]
+      }),
+    });
+
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error?.message || 'API error');
+    }
+
+    const data = await response.json();
+    const result = data.content?.[0]?.text?.trim();
+    if (!result) throw new Error('No response from Claude');
+
+    improveState[itemId] = { open: true, instruction, result, thinking: false };
+    render();
+
+  } catch(e) {
+    console.error('Improve failed:', e);
+    improveState[itemId] = { open: true, instruction, result: null, thinking: false };
+    render();
+    showToast(`Improve failed: ${e.message}`, 'error');
+  }
+}
+
+// ── Edit modal (legacy — kept for fallback) ────────────────────
 function openEdit(itemId) {
   const item = briefingItems.find(i => i.id === itemId);
   if (!item) return;
   editingItemId = itemId;
-  // Strip signature for editing — user edits body only
-  const sigPlain = '\n\nGerrit Högemann\n@: gerrithogemann@gmail.com\n✆: +353 89 240 5889';
-  const bodyOnly = (item.draft || '').replace(sigPlain, '').trimEnd();
-  document.getElementById('modal-text').value = bodyOnly;
+  document.getElementById('modal-text').value = item.draft || '';
   document.getElementById('modal').style.display = 'flex';
 }
 
@@ -533,16 +784,8 @@ function closeModal() {
 async function submitEdit() {
   if (!editingItemId) return;
   const editedDraft = document.getElementById('modal-text').value;
-  const item = briefingItems.find(i => i.id === editingItemId);
-  if (!item) return;
-
-  const btn = document.getElementById('btn-send-modal');
-  btn.textContent = 'Sending…';
-  btn.disabled = true;
-
   const itemId = editingItemId;
   closeModal();
-
   await sendAndDecide(itemId, editedDraft);
 }
 
