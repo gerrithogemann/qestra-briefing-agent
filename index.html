@@ -223,8 +223,18 @@ function formatDate() {
   return new Date().toLocaleDateString('en-IE', { weekday:'long', day:'numeric', month:'long' });
 }
 
+const AGENT_NAMES = {
+  'igor': 'Igor',
+  'masha': 'Masha',
+  'vera': 'Vera',
+  'boris-keeper': 'Boris · Keeper',
+  'boris-tropiq': 'Boris · TropiQ',
+  'boris-sorte-do-jugo': 'Boris · Sorte do Jugo',
+  'dmitri-personal': 'Dmitri · Personal',
+  'dmitri-qestra': 'Dmitri · Qestra',
+};
 function shortAgent(name='') {
-  return name.replace('aleksandra-','').replace('-agent','').toUpperCase();
+  return AGENT_NAMES[name] || name.replace('aleksandra-','').replace('-agent','').toUpperCase();
 }
 
 // ── Load data ──────────────────────────────────────────────────
