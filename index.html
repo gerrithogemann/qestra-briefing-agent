@@ -249,9 +249,7 @@ const SB_URL = 'https://ztgdtthdmosjvqpauzqw.supabase.co/rest/v1';
 const SB_KEY = 'sb_publishable_ZoTVAdhfEe5K6eKoNZV5DQ_jw3yI0MD';
 const H = { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
 
-// Anthropic API key for inline AI improvements
-// This calls the API client-side — only used for draft rewriting, no sensitive data involved
-const ANTHROPIC_KEY = ''; // ← paste your Anthropic API key here
+// No API keys in the PWA — all sensitive calls go through /api/* Vercel functions
 
 let currentTab = 'briefing';
 let briefingItems = [];
@@ -722,37 +720,21 @@ async function runImprove(itemId) {
   render();
 
   try {
-    // Call Anthropic API directly from the PWA
-    // Only used for draft rewriting — no sensitive data in the request
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    // Call via Vercel function — keeps ANTHROPIC_API_KEY server-side
+    const response = await fetch('/api/improve', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': ANTHROPIC_KEY,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true',
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-5',
-        max_tokens: 500,
-        system: `You are helping Gerrit rewrite email drafts. 
-His voice: warm, natural, first names always, short is better than long, never corporate.
-Return ONLY the rewritten email body. No explanation, no subject line, no sign-off.`,
-        messages: [{
-          role: 'user',
-          content: `Original draft:\n${item.draft}\n\nInstruction: ${instruction}\n\nRewrite it.`
-        }]
-      }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ draft: item.draft, instruction }),
     });
 
     if (!response.ok) {
       const err = await response.json();
-      throw new Error(err.error?.message || 'API error');
+      throw new Error(err.error || 'Improve failed');
     }
 
     const data = await response.json();
-    const result = data.content?.[0]?.text?.trim();
-    if (!result) throw new Error('No response from Claude');
+    const result = data.result;
+    if (!result) throw new Error('No response from server');
 
     improveState[itemId] = { open: true, instruction, result, thinking: false };
     render();
