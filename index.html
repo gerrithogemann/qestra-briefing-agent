@@ -2,895 +2,332 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="theme-color" content="#090909" />
-  <title>Aleksandra</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aleksandra · Agent OS</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg: #090909; --surface: #0f0f0f; --surface2: #141414; --surface3: #181818;
-      --border: #1c1c1c; --border2: #242424; --border3: #2e2e2e;
-      --text: #c8c8c8; --muted: #666; --faint: #2a2a2a;
-      --amber: #f59e0b; --amber-dim: rgba(245,158,11,0.10);
-      --green: #4ade80; --red: #f87171; --yellow: #facc15; --blue: #60a5fa;
-      --purple: #a78bfa;
+      --bg: #090909; --surface: #0f0f0f; --border: #1c1c1c; --border2: #242424;
+      --text: #c8c8c8; --muted: #555; --faint: #2a2a2a;
+      --amber: #f59e0b; --amber-dim: rgba(245,158,11,0.12);
+      --green: #4ade80; --red: #f87171; --yellow: #facc15;
       --mono: 'DM Mono', monospace; --sans: 'Syne', sans-serif;
     }
-    html, body {
-      background: var(--bg); color: var(--text);
-      font-family: var(--sans); height: 100%;
-      -webkit-font-smoothing: antialiased;
-      overscroll-behavior: none;
-    }
-
-    /* ── Layout ── */
-    .app { display: flex; flex-direction: column; height: 100vh; max-width: 680px; margin: 0 auto; }
-
-    /* ── Header ── */
-    .header { padding: 20px 24px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
-    .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
-    .wordmark { font-family: var(--sans); font-size: 15px; font-weight: 700; letter-spacing: 0.15em; color: var(--amber); text-transform: uppercase; }
-    .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 6px var(--green); }
-    .status-dot.loading { background: var(--yellow); box-shadow: 0 0 6px var(--yellow); animation: pulse 1.2s ease-in-out infinite; }
-    .date-line { font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: 0.04em; }
-    .stats { display: flex; gap: 10px; margin-top: 14px; }
-    .stat { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; }
-    .stat-label { font-family: var(--mono); font-size: 8px; letter-spacing: 0.2em; color: var(--muted); text-transform: uppercase; margin-bottom: 6px; }
-    .stat-value { font-family: var(--sans); font-size: 22px; font-weight: 700; color: var(--text); }
-    .stat-value.amber { color: var(--amber); }
-    .stat-value.green { color: var(--green); }
-
-    /* ── Tabs ── */
-    .tabs { display: flex; padding: 0 24px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
-    .tab { flex: 1; padding: 14px 0; font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); background: none; border: none; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; }
-    .tab.active { color: var(--amber); border-bottom-color: var(--amber); }
-    .tab-badge { display: inline-block; background: var(--red); color: #000; font-size: 8px; font-weight: 700; padding: 1px 5px; border-radius: 10px; margin-left: 6px; vertical-align: middle; }
-
-    /* ── Content ── */
-    .content { flex: 1; overflow-y: auto; padding: 20px 24px 40px; }
-    .content::-webkit-scrollbar { width: 3px; }
-    .content::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
-
-    /* ── Empty state ── */
-    .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 200px; gap: 10px; }
-    .empty-state-icon { font-size: 32px; opacity: 0.3; }
-    .empty-state-text { font-family: var(--mono); font-size: 11px; color: var(--faint); text-align: center; line-height: 1.8; }
-
-    /* ── Briefing items ── */
-    .briefing-item {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: 10px; padding: 18px 20px; margin-bottom: 12px;
-      transition: border-color 0.2s; animation: fadeUp 0.3s ease both;
-    }
-    .briefing-item:active { border-color: var(--border2); }
-
-    /* type-specific left border accent */
-    .briefing-item.type-draft { border-left: 2px solid rgba(96,165,250,0.4); }
-    .briefing-item.type-insight { border-left: 2px solid rgba(245,158,11,0.3); }
-    .briefing-item.type-decision { border-left: 2px solid rgba(167,139,250,0.4); }
-
-    .item-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
-    .item-meta-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-    .item-agent { font-family: var(--mono); font-size: 8px; letter-spacing: 0.15em; color: var(--amber); text-transform: uppercase; }
-    .item-type { font-family: var(--mono); font-size: 8px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
-    .item-type.type-draft { color: var(--blue); }
-    .item-type.type-insight { color: var(--amber); opacity: 0.7; }
-    .item-type.type-decision { color: var(--purple); }
-    .priority-badge { font-family: var(--mono); font-size: 7px; padding: 2px 6px; border-radius: 3px; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 500; }
-    .priority-high { background: rgba(248,113,113,0.12); color: var(--red); }
-    .priority-medium { background: rgba(250,204,21,0.1); color: var(--yellow); }
-    .priority-low { background: rgba(74,222,128,0.1); color: var(--green); }
-    .item-title { font-size: 15px; font-weight: 600; color: #ddd; line-height: 1.4; margin-bottom: 8px; }
-    .item-summary { font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 14px; }
-
-    /* ── Draft box ── */
-    .item-draft { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 12px 14px; margin-bottom: 14px; }
-    .item-draft-label { font-family: var(--mono); font-size: 8px; color: var(--blue); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 8px; }
-    .item-draft-text { font-size: 13px; color: #aaa; line-height: 1.65; white-space: pre-wrap; }
-
-    /* ── Action buttons ── */
-    .item-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-    .btn { flex: 1; min-width: 80px; padding: 11px; border-radius: 7px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; border: none; cursor: pointer; transition: all 0.15s; }
-    .btn-approve { background: rgba(74,222,128,0.12); color: var(--green); border: 1px solid rgba(74,222,128,0.2); }
-    .btn-approve:active { background: rgba(74,222,128,0.22); }
-    .btn-approve.sending { opacity: 0.6; pointer-events: none; }
-    .btn-reject { background: rgba(248,113,113,0.08); color: var(--red); border: 1px solid rgba(248,113,113,0.15); }
-    .btn-reject:active { background: rgba(248,113,113,0.18); }
-    .btn-edit { background: transparent; color: var(--muted); border: 1px solid var(--border2); }
-    .btn-edit:active { background: var(--surface2); }
-    .btn-godit { background: rgba(245,158,11,0.08); color: var(--amber); border: 1px solid rgba(245,158,11,0.2); flex: 1; }
-    .btn-godit:active { background: rgba(245,158,11,0.18); }
-    .btn-godit.archiving { opacity: 0.6; pointer-events: none; }
-    .btn-improve { background: rgba(167,139,250,0.08); color: var(--purple); border: 1px solid rgba(167,139,250,0.2); }
-    .btn-improve:active { background: rgba(167,139,250,0.18); }
-    .btn-rerun { background: rgba(96,165,250,0.08); color: var(--blue); border: 1px solid rgba(96,165,250,0.2); flex: 0 0 auto; padding: 11px 14px; }
-    .btn-rerun:active { background: rgba(96,165,250,0.18); }
-    .btn-rerun.triggering { opacity: 0.6; pointer-events: none; }
-
-    /* ── Decision options ── */
-    .decision-options { display: flex; flex-direction: column; gap: 6px; margin-bottom: 0; }
-    .btn-option { width: 100%; padding: 11px 14px; border-radius: 7px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; background: rgba(167,139,250,0.07); color: var(--purple); border: 1px solid rgba(167,139,250,0.18); cursor: pointer; text-align: left; transition: all 0.15s; }
-    .btn-option:active { background: rgba(167,139,250,0.16); }
-
-    /* ── Decided badges ── */
-    .item-decided { opacity: 0.45; pointer-events: none; }
-    .decided-badge { display: inline-flex; align-items: center; gap: 5px; font-family: var(--mono); font-size: 9px; padding: 4px 10px; border-radius: 4px; margin-bottom: 10px; }
-    .decided-approved { background: rgba(74,222,128,0.08); color: var(--green); }
-    .decided-rejected { background: rgba(248,113,113,0.08); color: var(--red); }
-    .decided-sent { background: rgba(96,165,250,0.10); color: var(--blue); }
-    .decided-archived { background: rgba(245,158,11,0.08); color: var(--amber); }
-    .decided-chosen { background: rgba(167,139,250,0.08); color: var(--purple); }
-
-    /* ── AI improve panel ── */
-    .improve-panel {
-      margin-top: 12px; background: var(--surface3);
-      border: 1px solid rgba(167,139,250,0.2); border-radius: 8px;
-      padding: 14px; animation: fadeUp 0.2s ease;
-    }
-    .improve-panel-label { font-family: var(--mono); font-size: 8px; color: var(--purple); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 10px; }
-    .improve-input { width: 100%; background: var(--surface2); border: 1px solid var(--border2); border-radius: 6px; padding: 10px 12px; color: #bbb; font-family: var(--mono); font-size: 12px; line-height: 1.6; resize: none; height: 64px; outline: none; margin-bottom: 10px; }
-    .improve-input:focus { border-color: var(--purple); }
-    .improve-actions { display: flex; gap: 8px; }
-    .btn-improve-go { flex: 1; padding: 10px; border-radius: 6px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; background: rgba(167,139,250,0.12); color: var(--purple); border: 1px solid rgba(167,139,250,0.25); cursor: pointer; transition: all 0.15s; }
-    .btn-improve-go:disabled { opacity: 0.5; pointer-events: none; }
-    .btn-improve-cancel { padding: 10px 14px; border-radius: 6px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; background: transparent; color: var(--muted); border: 1px solid var(--border2); cursor: pointer; }
-    .improve-result { background: var(--surface2); border: 1px solid var(--border2); border-radius: 6px; padding: 12px; margin-bottom: 10px; font-size: 13px; color: #aaa; line-height: 1.65; white-space: pre-wrap; }
-    .improve-result-label { font-family: var(--mono); font-size: 8px; color: var(--green); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 8px; }
-    .improve-result-actions { display: flex; gap: 8px; }
-    .btn-use-result { flex: 1; padding: 10px; border-radius: 6px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; background: rgba(74,222,128,0.10); color: var(--green); border: 1px solid rgba(74,222,128,0.2); cursor: pointer; }
-    .btn-discard-result { padding: 10px 14px; border-radius: 6px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; background: transparent; color: var(--muted); border: 1px solid var(--border2); cursor: pointer; }
-    .improve-thinking { font-family: var(--mono); font-size: 11px; color: var(--purple); opacity: 0.7; padding: 8px 0; animation: pulse 1.2s ease-in-out infinite; }
-
-    /* ── Toast ── */
-    .toast {
-      position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%);
-      background: var(--surface2); border: 1px solid var(--border2);
-      color: var(--text); font-family: var(--mono); font-size: 11px;
-      padding: 10px 18px; border-radius: 8px;
-      animation: fadeUp 0.3s ease both;
-      z-index: 200; white-space: nowrap;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.5);
-    }
-    .toast.success { border-color: rgba(74,222,128,0.3); color: var(--green); }
-    .toast.error { border-color: rgba(248,113,113,0.3); color: var(--red); }
-
-    /* ── Edit modal ── */
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; display: flex; align-items: flex-end; animation: fadeIn 0.2s ease; }
-    .modal { background: var(--surface); border-top: 1px solid var(--border2); border-radius: 16px 16px 0 0; width: 100%; max-width: 680px; margin: 0 auto; padding: 20px 24px 40px; animation: slideUp 0.3s ease; }
-    .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
-    .modal-title { font-family: var(--mono); font-size: 10px; letter-spacing: 0.15em; color: var(--amber); text-transform: uppercase; }
-    .modal-close { background: none; border: none; color: var(--muted); font-size: 18px; cursor: pointer; padding: 4px; }
-    .modal-textarea { width: 100%; background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; padding: 14px; color: #bbb; font-family: var(--mono); font-size: 12px; line-height: 1.7; resize: none; height: 180px; outline: none; margin-bottom: 14px; }
-    .modal-textarea:focus { border-color: var(--amber); }
-    .btn-send { width: 100%; padding: 14px; background: linear-gradient(135deg, #f59e0b, #d97706); border: none; border-radius: 8px; color: #000; font-family: var(--sans); font-weight: 700; font-size: 13px; letter-spacing: 0.08em; cursor: pointer; }
-    .btn-send:disabled { opacity: 0.5; pointer-events: none; }
-
-    /* ── Runs tab ── */
-    .run-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; margin-bottom: 10px; border-left: 3px solid transparent; animation: fadeUp 0.3s ease both; }
-    .run-card.success { border-left-color: var(--green); }
-    .run-card.error { border-left-color: var(--red); }
-    .run-card.running { border-left-color: var(--yellow); }
-    .run-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-    .run-agent { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; color: #aaa; text-transform: uppercase; }
-    .run-status { font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; }
-    .run-status.success { color: var(--green); }
-    .run-status.error { color: var(--red); }
-    .run-status.running { color: var(--yellow); }
-    .run-meta { font-family: var(--mono); font-size: 10px; color: var(--faint); display: flex; gap: 14px; margin-bottom: 6px; }
-    .run-meta span { color: #555; }
-    .run-error { font-family: var(--mono); font-size: 10px; color: var(--red); margin-top: 6px; line-height: 1.5; word-break: break-word; }
-
-    /* ── Section header ── */
-    .section-head { font-family: var(--mono); font-size: 9px; letter-spacing: 0.2em; color: var(--faint); text-transform: uppercase; margin-bottom: 14px; margin-top: 4px; }
-
-    /* ── Animations ── */
-    @keyframes fadeUp { from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)} }
-    @keyframes fadeIn { from{opacity:0}to{opacity:1} }
-    @keyframes slideUp { from{transform:translateY(100%)}to{transform:translateY(0)} }
-    @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
+    html, body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; -webkit-font-smoothing: antialiased; }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 36px 32px 48px; }
+    .header { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 36px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+    .logo { font-family: var(--sans); font-size: 22px; font-weight: 700; letter-spacing: 0.12em; color: var(--amber); text-transform: uppercase; }
+    .logo-sub { font-family: var(--mono); font-size: 10px; color: var(--faint); letter-spacing: 0.18em; text-transform: uppercase; margin-top: 4px; }
+    .sync-info { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-top: 5px; }
+    .refresh-btn { background: transparent; border: 1px solid var(--border2); border-radius: 5px; color: var(--muted); font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; padding: 9px 18px; cursor: pointer; text-transform: uppercase; transition: border-color 0.2s, color 0.2s; }
+    .refresh-btn:hover { border-color: var(--amber); color: var(--amber); }
+    .refresh-btn:disabled { opacity: 0.3; cursor: default; }
+    .section-head { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+    .section-label { font-family: var(--mono); font-size: 9px; letter-spacing: 0.2em; color: var(--amber); text-transform: uppercase; white-space: nowrap; }
+    .section-count { font-family: var(--mono); font-size: 9px; color: var(--faint); }
+    .section-rule { flex: 1; height: 1px; background: linear-gradient(to right, var(--border2), transparent); }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px 22px; }
+    .agent-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin-bottom: 20px; }
+    .agent-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 18px 20px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .dot-green { background: var(--green); box-shadow: 0 0 7px var(--green); }
+    .dot-red { background: var(--red); box-shadow: 0 0 7px var(--red); }
+    .dot-yellow { background: var(--yellow); box-shadow: 0 0 7px var(--yellow); }
+    .dot-grey { background: var(--faint); }
+    .agent-name-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .agent-name { font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; color: #999; text-transform: uppercase; }
+    .agent-meta { font-family: var(--mono); font-size: 10px; color: var(--faint); line-height: 2; }
+    .agent-meta span { color: #777; }
+    .agent-error { font-family: var(--mono); font-size: 9px; color: var(--red); margin-top: 6px; word-break: break-word; line-height: 1.5; }
+    .main-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+    .bottom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 700px) { .main-grid, .bottom-grid { grid-template-columns: 1fr; } }
+    .item-list { display: flex; flex-direction: column; gap: 12px; }
+    .briefing-item { border-left: 2px solid var(--amber-dim); padding-left: 12px; }
+    .item-title { font-size: 13px; color: #bbb; line-height: 1.45; margin-bottom: 4px; }
+    .item-meta { font-family: var(--mono); font-size: 9px; color: var(--faint); display: flex; gap: 10px; }
+    .priority-high { color: var(--red); }
+    .priority-medium { color: var(--yellow); }
+    .priority-low { color: var(--green); }
+    .empty { font-family: var(--mono); font-size: 11px; color: var(--faint); }
+    .decision-row { display: flex; align-items: flex-start; gap: 10px; }
+    .decision-icon { font-family: var(--mono); font-size: 11px; padding-top: 1px; flex-shrink: 0; }
+    .icon-approved { color: var(--green); }
+    .icon-rejected { color: var(--red); }
+    .icon-edited { color: var(--yellow); }
+    .decision-title { font-size: 13px; color: #888; line-height: 1.4; }
+    .decision-meta { font-family: var(--mono); font-size: 9px; color: var(--faint); }
+    .pref-item { margin-bottom: 14px; }
+    .pref-tags { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+    .pref-tag { font-family: var(--mono); font-size: 8px; color: var(--amber); border: 1px solid rgba(245,158,11,0.25); padding: 2px 7px; border-radius: 3px; letter-spacing: 0.1em; text-transform: uppercase; }
+    .pref-conf { font-family: var(--mono); font-size: 9px; color: var(--faint); }
+    .pref-rule { font-size: 13px; color: #999; line-height: 1.5; }
+    .memory-scroll { max-height: 340px; overflow-y: auto; padding-right: 4px; }
+    .memory-scroll::-webkit-scrollbar { width: 3px; }
+    .memory-scroll::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+    .memory-item { padding-bottom: 12px; margin-bottom: 12px; border-bottom: 1px solid var(--border); }
+    .memory-item:last-child { border-bottom: none; margin-bottom: 0; }
+    .memory-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
+    .memory-entity { font-family: var(--mono); font-size: 9px; color: var(--amber); letter-spacing: 0.1em; text-transform: uppercase; }
+    .memory-category { font-family: var(--mono); font-size: 9px; color: var(--border2); }
+    .memory-context { font-size: 12px; color: #666; line-height: 1.55; }
+    .error-banner { background: #150a0a; border: 1px solid #3a1515; border-radius: 6px; padding: 12px 16px; margin-bottom: 20px; font-family: var(--mono); font-size: 11px; color: var(--red); }
+    .footer { display: flex; justify-content: space-between; margin-top: 32px; padding-top: 16px; border-top: 1px solid var(--border); font-family: var(--mono); font-size: 9px; color: var(--border2); letter-spacing: 0.08em; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+    .pulsing { animation: pulse 1.4s ease-in-out infinite; }
   </style>
 </head>
 <body>
-<div class="app">
-
-  <!-- Header -->
+<div class="wrap">
   <div class="header">
-    <div class="header-top">
-      <span class="wordmark">Aleksandra</span>
-      <div class="status-dot" id="status-dot"></div>
+    <div>
+      <div class="logo">Aleksandra</div>
+      <div class="logo-sub">Personal Agent OS</div>
+      <div class="sync-info" id="sync-info">connecting...</div>
     </div>
-    <div class="date-line" id="date-line">—</div>
-    <div class="stats">
-      <div class="stat">
-        <div class="stat-label">Pending</div>
-        <div class="stat-value amber" id="stat-pending">—</div>
+    <button class="refresh-btn" id="refresh-btn" onclick="loadAll()">Refresh</button>
+  </div>
+
+  <div id="error-banner" class="error-banner" style="display:none"></div>
+
+  <div class="section-head">
+    <span class="section-label">Agent Status</span>
+    <span class="section-count" id="agent-count"></span>
+    <div class="section-rule"></div>
+  </div>
+  <div class="agent-grid" id="agent-grid"><div class="agent-card"><div class="empty pulsing">loading...</div></div></div>
+
+  <div class="main-grid">
+    <div class="card">
+      <div class="section-head">
+        <span class="section-label">Pending</span>
+        <span class="section-count" id="pending-count"></span>
+        <div class="section-rule"></div>
       </div>
-      <div class="stat">
-        <div class="stat-label">Done today</div>
-        <div class="stat-value green" id="stat-done">—</div>
+      <div id="pending-list" class="item-list"><div class="empty pulsing">loading...</div></div>
+    </div>
+    <div class="card">
+      <div class="section-head">
+        <span class="section-label">Recent Decisions</span>
+        <span class="section-count" id="decided-count"></span>
+        <div class="section-rule"></div>
       </div>
-      <div class="stat">
-        <div class="stat-label">Agents</div>
-        <div class="stat-value" id="stat-agents">—</div>
-      </div>
+      <div id="decided-list" class="item-list"><div class="empty pulsing">loading...</div></div>
     </div>
   </div>
 
-  <!-- Tabs -->
-  <div class="tabs">
-    <button class="tab active" id="tab-briefing" onclick="switchTab('briefing')">
-      Briefing <span class="tab-badge" id="badge-pending" style="display:none">0</span>
-    </button>
-    <button class="tab" id="tab-runs" onclick="switchTab('runs')">
-      Runs <span class="tab-badge" id="badge-errors" style="display:none">!</span>
-    </button>
+  <div class="bottom-grid">
+    <div class="card">
+      <div class="section-head">
+        <span class="section-label">Learned Preferences</span>
+        <span class="section-count" id="prefs-count"></span>
+        <div class="section-rule"></div>
+      </div>
+      <div id="prefs-list"><div class="empty pulsing">loading...</div></div>
+    </div>
+    <div class="card">
+      <div class="section-head">
+        <span class="section-label">Memory</span>
+        <span class="section-count" id="memory-count"></span>
+        <div class="section-rule"></div>
+      </div>
+      <div class="memory-scroll"><div id="memory-list"><div class="empty pulsing">loading...</div></div></div>
+    </div>
   </div>
 
-  <!-- Content -->
-  <div class="content" id="content"></div>
-
-</div>
-
-<!-- Edit modal -->
-<div class="modal-overlay" id="modal" style="display:none" onclick="if(event.target===this)closeModal()">
-  <div class="modal">
-    <div class="modal-header">
-      <span class="modal-title">Edit Draft</span>
-      <button class="modal-close" onclick="closeModal()">✕</button>
-    </div>
-    <textarea class="modal-textarea" id="modal-text" placeholder="Edit the draft reply..."></textarea>
-    <button class="btn-send" id="btn-send-modal" onclick="submitEdit()">Send Edited Reply →</button>
+  <div class="footer">
+    <span>aleksandra - agent os</span>
+    <span id="footer-ts"></span>
   </div>
 </div>
 
 <script>
-const SB_URL = 'https://ztgdtthdmosjvqpauzqw.supabase.co/rest/v1';
-const SB_KEY = 'sb_publishable_ZoTVAdhfEe5K6eKoNZV5DQ_jw3yI0MD';
-const H = { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
+  const SB_URL = 'https://ztgdtthdmosjvqpauzqw.supabase.co/rest/v1';
+  const SB_KEY = 'sb_publishable_ZoTVAdhfEe5K6eKoNZV5DQ_jw3yI0MD';
+  const H = { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Content-Type': 'application/json' };
 
-// No API keys in the PWA — all sensitive calls go through /api/* Vercel functions
+  const AGENT_NAMES = {
+    'igor': 'Igor',
+    'masha': 'Masha',
+    'vera': 'Vera',
+    'aleksei': 'Aleksei',
+    'pavel': 'Pavel',
+    'boris-keeper': 'Boris - Keeper',
+    'boris-tropiq': 'Boris - TropiQ',
+    'boris-sorte-do-jugo': 'Boris - Sorte do Jugo',
+    'dmitri-personal': 'Dmitri - Personal',
+    'dmitri-qestra': 'Dmitri - Qestra',
+    'nadia': 'Nadia',
+    'katya': 'Katya',
+  };
 
-let currentTab = 'briefing';
-let briefingItems = [];
-let agentRuns = [];
-let decisions = {};
-let editingItemId = null;
-
-// Track which items have improve panels open and their state
-// improveState[itemId] = { open: bool, instruction: str, result: str|null, thinking: bool }
-const improveState = {};
-
-async function q(table, params='', method='GET', body=null) {
-  const opts = { method, headers: H };
-  if (body) opts.body = JSON.stringify(body);
-  const r = await fetch(`${SB_URL}/${table}?${params}`, opts);
-  if (!r.ok) throw new Error(`${table} ${r.status}`);
-  return method === 'GET' ? r.json() : r;
-}
-
-function timeAgo(ts) {
-  if (!ts) return '—';
-  const s = Math.floor((Date.now() - new Date(ts)) / 1000);
-  if (s < 60) return `${s}s ago`;
-  if (s < 3600) return `${Math.floor(s/60)}m ago`;
-  if (s < 86400) return `${Math.floor(s/3600)}h ago`;
-  return `${Math.floor(s/86400)}d ago`;
-}
-
-function formatDate() {
-  return new Date().toLocaleDateString('en-IE', { weekday:'long', day:'numeric', month:'long' });
-}
-
-const AGENT_NAMES = {
-  'igor': 'Igor', 'masha': 'Masha', 'vera': 'Vera',
-  'boris-keeper': 'Boris · Keeper', 'boris-tropiq': 'Boris · TropiQ',
-  'boris-sorte-do-jugo': 'Boris · Sorte do Jugo',
-  'dmitri-personal': 'Dmitri · Personal', 'dmitri-qestra': 'Dmitri · Qestra',
-};
-function shortAgent(name='') {
-  return AGENT_NAMES[name] || name.replace('aleksandra-','').replace('-agent','').toUpperCase();
-}
-
-function showToast(msg, type='') {
-  const existing = document.querySelector('.toast');
-  if (existing) existing.remove();
-  const el = document.createElement('div');
-  el.className = `toast ${type}`;
-  el.textContent = msg;
-  document.body.appendChild(el);
-  setTimeout(() => el.remove(), 3000);
-}
-
-// ── Load data ──────────────────────────────────────────────────
-async function loadAll() {
-  document.getElementById('status-dot').className = 'status-dot loading';
-  document.getElementById('date-line').textContent = formatDate();
-  try {
-    const [items, runs, decs] = await Promise.all([
-      q('briefing_items', 'order=created_at.desc&limit=30'),
-      q('agent_runs', 'order=started_at.desc&limit=20'),
-      q('decisions', 'order=created_at.desc&limit=50'),
-    ]);
-    briefingItems = items;
-    agentRuns = runs;
-    decisions = {};
-    decs.forEach(d => { decisions[d.briefing_item_id] = d; });
-    updateStats();
-    render();
-    document.getElementById('status-dot').className = 'status-dot';
-  } catch(e) {
-    document.getElementById('status-dot').className = 'status-dot';
-    document.getElementById('content').innerHTML = `<div class="empty-state"><div class="empty-state-icon">⚠</div><div class="empty-state-text">Could not load data<br>${e.message}</div></div>`;
-  }
-}
-
-function updateStats() {
-  const pending = briefingItems.filter(i => i.status === 'pending').length;
-  const done = Object.keys(decisions).length;
-  const uniqueAgents = new Set(agentRuns.map(r => r.agent)).size;
-  const hasErrors = agentRuns.some(r => r.status === 'error');
-  document.getElementById('stat-pending').textContent = pending;
-  document.getElementById('stat-done').textContent = done;
-  document.getElementById('stat-agents').textContent = uniqueAgents;
-  const badge = document.getElementById('badge-pending');
-  if (pending > 0) { badge.textContent = pending; badge.style.display = 'inline-block'; }
-  else badge.style.display = 'none';
-  document.getElementById('badge-errors').style.display = hasErrors ? 'inline-block' : 'none';
-}
-
-function switchTab(tab) {
-  currentTab = tab;
-  document.getElementById('tab-briefing').className = 'tab' + (tab === 'briefing' ? ' active' : '');
-  document.getElementById('tab-runs').className = 'tab' + (tab === 'runs' ? ' active' : '');
-  render();
-}
-
-function render() {
-  if (currentTab === 'briefing') renderBriefing();
-  else renderRuns();
-}
-
-// ── Briefing tab ───────────────────────────────────────────────
-function renderBriefing() {
-  const content = document.getElementById('content');
-  const pending = briefingItems.filter(i => i.status === 'pending');
-  const actioned = briefingItems.filter(i => i.status !== 'pending');
-
-  if (briefingItems.length === 0) {
-    content.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-state-icon">🌙</div>
-        <div class="empty-state-text">No briefing items yet.<br>Agents run at 07:30–08:15 IST each morning.</div>
-      </div>`;
-    return;
+  function displayName(agent) {
+    return AGENT_NAMES[agent] || (agent || 'unknown').replace('aleksandra-','').replace('-agent','').toUpperCase();
   }
 
-  let html = '';
-  if (pending.length > 0) {
-    html += `<div class="section-head">Pending · ${pending.length}</div>`;
-    pending.forEach(item => { html += renderItem(item, false); });
+  async function q(table, params) {
+    const url = params ? `${SB_URL}/${table}?${params}` : `${SB_URL}/${table}`;
+    const r = await fetch(url, { headers: H });
+    if (!r.ok) throw new Error(`${table}: ${r.status} ${r.statusText}`);
+    return r.json();
   }
-  if (actioned.length > 0) {
-    html += `<div class="section-head" style="margin-top:24px">Actioned · ${actioned.length}</div>`;
-    actioned.forEach(item => { html += renderItem(item, true); });
+
+  function timeAgo(ts) {
+    if (!ts) return '-';
+    const s = Math.floor((Date.now() - new Date(ts)) / 1000);
+    if (s < 60) return `${s}s ago`;
+    if (s < 3600) return `${Math.floor(s/60)}m ago`;
+    if (s < 86400) return `${Math.floor(s/3600)}h ago`;
+    return `${Math.floor(s/86400)}d ago`;
   }
-  content.innerHTML = html;
-}
 
-function renderItem(item, decided) {
-  const dec = decisions[item.id];
-  const type = item.type || 'insight';
-  const priorityClass = `priority-${item.priority || 'medium'}`;
-  const priorityLabel = item.priority || 'medium';
-  const state = improveState[item.id] || {};
+  function dotClass(status) {
+    if (status === 'success') return 'dot dot-green';
+    if (status === 'error') return 'dot dot-red';
+    if (status === 'running') return 'dot dot-yellow';
+    return 'dot dot-grey';
+  }
 
-  // ── Decided badge ──
-  let decBadge = '';
-  if (dec) {
-    if (dec.action === 'approved' && type === 'draft') {
-      decBadge = `<div class="decided-badge decided-sent">✉ sent</div>`;
-    } else if (dec.action === 'approved') {
-      decBadge = `<div class="decided-badge decided-approved">✓ noted</div>`;
-    } else if (dec.action === 'archived') {
-      decBadge = `<div class="decided-badge decided-archived">✓ archived</div>`;
-    } else if (dec.action === 'chosen') {
-      decBadge = `<div class="decided-badge decided-chosen">✓ ${dec.edited_draft || 'chosen'}</div>`;
-    } else {
-      decBadge = `<div class="decided-badge decided-rejected">✗ rejected</div>`;
+  function setCount(id, n) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = `(${n})`;
+  }
+
+  function renderAgents(runs) {
+    const byAgent = {};
+    runs.forEach(r => { if (!byAgent[r.agent]) byAgent[r.agent] = r; });
+    const agents = Object.values(byAgent);
+    setCount('agent-count', agents.length);
+    const grid = document.getElementById('agent-grid');
+    if (!agents.length) {
+      grid.innerHTML = '<div class="agent-card"><div class="empty">No agent runs yet</div></div>';
+      return;
     }
-  }
-
-  // ── Draft box ──
-  let draftHtml = '';
-  if (item.draft) {
-    // Show improved draft if available, otherwise original
-    const displayDraft = state.result || item.draft;
-    const draftLabel = state.result ? 'Improved Draft' : 'Draft Reply';
-    const labelColor = state.result ? 'color:var(--green)' : '';
-    draftHtml = `
-      <div class="item-draft">
-        <div class="item-draft-label" style="${labelColor}">${draftLabel}</div>
-        <div class="item-draft-text" id="draft-text-${item.id}">${displayDraft}</div>
-      </div>`;
-  }
-
-  // ── Improve panel ──
-  let improveHtml = '';
-  if (state.open && !dec) {
-    if (state.thinking) {
-      improveHtml = `
-        <div class="improve-panel">
-          <div class="improve-panel-label">✦ Improve Draft</div>
-          <div class="improve-thinking">Rewriting…</div>
-        </div>`;
-    } else if (state.result) {
-      improveHtml = `
-        <div class="improve-panel">
-          <div class="improve-panel-label">✦ Improved — looks good?</div>
-          <div class="improve-result-actions">
-            <button class="btn-use-result" onclick="useImprovedDraft('${item.id}')">✓ Use this</button>
-            <button class="btn-discard-result" onclick="discardImprove('${item.id}')">Try again</button>
-          </div>
-        </div>`;
-    } else {
-      improveHtml = `
-        <div class="improve-panel">
-          <div class="improve-panel-label">✦ Improve Draft</div>
-          <textarea class="improve-input" id="improve-input-${item.id}" placeholder="e.g. make it shorter · add unavailable Friday · more friendly"></textarea>
-          <div class="improve-actions">
-            <button class="btn-improve-go" id="improve-go-${item.id}" onclick="runImprove('${item.id}')">Rewrite →</button>
-            <button class="btn-improve-cancel" onclick="closeImprove('${item.id}')">Cancel</button>
-          </div>
-        </div>`;
-    }
-  }
-
-  // ── Action buttons by type ──
-  let actions = '';
-  if (!dec) {
-    if (type === 'draft') {
-      // Draft: Send · Improve · Reject
-      actions = `
-        <div class="item-actions">
-          <button class="btn btn-approve" id="approve-btn-${item.id}" onclick="decide('${item.id}', 'approved')">✉ Send</button>
-          <button class="btn btn-improve" onclick="toggleImprove('${item.id}')">✦ Improve</button>
-          <button class="btn btn-reject" onclick="decide('${item.id}', 'rejected')">✗ Reject</button>
-        </div>`;
-    } else if (type === 'insight') {
-      // Insight: Got it (archives email)
-      actions = `
-        <div class="item-actions">
-          <button class="btn btn-godit" id="godit-btn-${item.id}" onclick="gotIt('${item.id}')">✓ Got it</button>
-        </div>`;
-    } else if (type === 'decision' && item.options && item.options.length > 0) {
-      // Decision: option buttons
-      const optBtns = item.options.map(opt =>
-        `<button class="btn-option" onclick="chooseOption('${item.id}', '${opt.replace(/'/g,"\\'")}')">→ ${opt}</button>`
-      ).join('');
-      actions = `<div class="decision-options">${optBtns}</div>`;
-    } else if (type === 'decision' && item.agent === 'aleksei') {
-      // Aleksei prompt spec — approve + re-run button
-      actions = `
-        <div class="item-actions">
-          <button class="btn btn-approve" id="approve-btn-${item.id}" onclick="decide('${item.id}', 'approved')">✓ Implemented</button>
-          <button class="btn btn-rerun" onclick="rerunAgent('aleksei')" title="Re-run Aleksei now">↺ Re-run</button>
-          <button class="btn btn-reject" onclick="decide('${item.id}', 'rejected')">✗ Skip</button>
-        </div>`;
-    } else if (type === 'draft' && item.agent === 'pavel') {
-      // Pavel content draft — publish to Notion on approve
-      actions = `
-        <div class="item-actions">
-          <button class="btn btn-approve" id="approve-btn-${item.id}" onclick="publishPavelDraft('${item.id}')">✓ Publish</button>
-          <button class="btn btn-improve" onclick="toggleImprove('${item.id}')">✦ Improve</button>
-          <button class="btn btn-rerun" onclick="rerunAgent('pavel')" title="Re-run Pavel now">↺ Re-run</button>
-          <button class="btn btn-reject" onclick="decide('${item.id}', 'rejected')">✗ Reject</button>
-        </div>`;
-    } else {
-      // Fallback
-      actions = `
-        <div class="item-actions">
-          <button class="btn btn-approve" onclick="decide('${item.id}', 'approved')">✓ Approve</button>
-          <button class="btn btn-reject" onclick="decide('${item.id}', 'rejected')">✗ Reject</button>
-        </div>`;
-    }
-  }
-
-  return `
-    <div class="briefing-item type-${type} ${decided ? 'item-decided' : ''}" id="item-${item.id}">
-      ${decBadge}
-      <div class="item-header">
-        <div class="item-meta-top">
-          <span class="item-agent">${shortAgent(item.agent)}</span>
-          <span class="item-type type-${type}">${type}</span>
-          <span class="priority-badge ${priorityClass}">${priorityLabel}</span>
+    grid.innerHTML = agents.map(r => `
+      <div class="agent-card">
+        <div class="agent-name-row">
+          <div class="${dotClass(r.status)}"></div>
+          <span class="agent-name">${displayName(r.agent)}</span>
         </div>
-        <span style="font-family:var(--mono);font-size:9px;color:var(--faint)">${timeAgo(item.created_at)}</span>
-      </div>
-      <div class="item-title">${item.title || 'Untitled'}</div>
-      ${item.summary ? `<div class="item-summary">${item.summary}</div>` : ''}
-      ${draftHtml}
-      ${improveHtml}
-      ${actions}
-    </div>`;
-}
-
-// ── Runs tab ───────────────────────────────────────────────────
-function renderRuns() {
-  const content = document.getElementById('content');
-  if (agentRuns.length === 0) {
-    content.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-state-icon">⏳</div>
-        <div class="empty-state-text">No agent runs yet.<br>First run tomorrow at 07:30 IST.</div>
-      </div>`;
-    return;
-  }
-  content.innerHTML = `
-    <div class="section-head">Recent Agent Runs · ${agentRuns.length}</div>
-    ${agentRuns.map(run => `
-      <div class="run-card ${run.status || 'unknown'}">
-        <div class="run-header">
-          <span class="run-agent">${shortAgent(run.agent)}</span>
-          <span class="run-status ${run.status || 'unknown'}">${run.status || '—'}</span>
+        <div class="agent-meta">
+          ran <span>${timeAgo(r.started_at)}</span><br>
+          ${r.duration_ms ? `took <span>${(r.duration_ms/1000).toFixed(1)}s</span>` : ''}
+          ${r.items_created ? ` &middot; <span>${r.items_created} items</span>` : ''}
         </div>
-        <div class="run-meta">
-          <span>${timeAgo(run.started_at)}</span>
-          ${run.duration_ms ? `<span>${(run.duration_ms/1000).toFixed(1)}s</span>` : ''}
-          ${run.items_created ? `<span>${run.items_created} items</span>` : ''}
-        </div>
-        ${run.error ? `<div class="run-error">${run.error}</div>` : ''}
-      </div>`).join('')}`;
-}
-
-// ── Actions ────────────────────────────────────────────────────
-
-// Generic decide (non-send, non-archive)
-async function decide(itemId, action) {
-  const item = briefingItems.find(i => i.id === itemId);
-  if (!item) return;
-
-  const isEmailDraft = item.type === 'draft' && !!item.draft;
-  if (action === 'approved' && isEmailDraft) {
-    // Get the current draft text (may have been improved)
-    const draftEl = document.getElementById(`draft-text-${itemId}`);
-    const currentDraft = draftEl ? draftEl.textContent : item.draft;
-    await sendAndDecide(itemId, currentDraft !== item.draft ? currentDraft : null);
-    return;
+        ${r.error ? `<div class="agent-error">${r.error.slice(0,120)}</div>` : ''}
+      </div>`).join('');
   }
 
-  item.status = action === 'approved' ? 'approved' : 'rejected';
-  decisions[itemId] = { action, briefing_item_id: itemId, created_at: new Date().toISOString() };
-  updateStats();
-  render();
+  function renderBriefing(items, decisions) {
+    const pending = items.filter(i => i.status === 'pending');
+    setCount('pending-count', pending.length);
+    setCount('decided-count', decisions.length);
 
-  try {
-    await q('decisions', '', 'POST', {
-      briefing_item_id: itemId, action,
-      agent: item.agent, original_draft: item.draft || null,
-    });
-    await q(`briefing_items?id=eq.${itemId}`, '', 'PATCH', { status: action });
+    const pendingEl = document.getElementById('pending-list');
+    pendingEl.innerHTML = pending.length
+      ? pending.map(i => `
+          <div class="briefing-item">
+            <div class="item-title">${i.title || 'Untitled'}</div>
+            <div class="item-meta">
+              <span>${displayName(i.agent)}</span>
+              <span class="priority-${i.priority || 'medium'}">${i.priority || 'medium'}</span>
+              <span>${timeAgo(i.created_at)}</span>
+            </div>
+          </div>`).join('')
+      : '<div class="empty">inbox clear</div>';
 
-    // Aleksei approval: log to memory so he won't re-suggest (non-fatal)
-    if (item.agent === 'aleksei' && action === 'approved') {
-      fetch('/api/log-implementation', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          briefingItemId: itemId,
-          title: item.title,
-          summary: item.summary,
-          product: item.source_data?.product || 'Keeper',
-        }),
-      }).catch(e => console.warn('log-implementation failed (non-fatal):', e.message));
+    const decidedEl = document.getElementById('decided-list');
+    decidedEl.innerHTML = decisions.length
+      ? decisions.slice(0, 8).map(d => {
+          const a = d.action || 'actioned';
+          const icon = a === 'approved' ? '+' : a === 'rejected' ? 'x' : '~';
+          const cls = a === 'approved' ? 'icon-approved' : a === 'rejected' ? 'icon-rejected' : 'icon-edited';
+          return `
+            <div class="decision-row">
+              <div class="decision-icon ${cls}">${icon}</div>
+              <div>
+                <div class="decision-title">${displayName(d.agent)}</div>
+                <div class="decision-meta">${timeAgo(d.created_at)}</div>
+              </div>
+            </div>`;
+        }).join('')
+      : '<div class="empty">no decisions yet</div>';
+  }
+
+  function renderPreferences(prefs) {
+    setCount('prefs-count', prefs.length);
+    const el = document.getElementById('prefs-list');
+    el.innerHTML = prefs.length
+      ? prefs.map(p => `
+          <div class="pref-item">
+            <div class="pref-tags">
+              <span class="pref-tag">${displayName(p.agent)}</span>
+              ${p.confidence ? `<span class="pref-conf">${Math.round(p.confidence*100)}% conf &middot; ${p.sample_size||0} samples</span>` : ''}
+            </div>
+            <div class="pref-rule">${p.rule}</div>
+          </div>`).join('')
+      : '<div class="empty">no preferences inferred yet</div>';
+  }
+
+  function renderMemory(mem) {
+    setCount('memory-count', mem.length);
+    const el = document.getElementById('memory-list');
+    el.innerHTML = mem.length
+      ? mem.map(m => `
+          <div class="memory-item">
+            <div class="memory-head">
+              <span class="memory-entity">${m.entity || '-'}</span>
+              ${m.category ? `<span class="memory-category">${m.category}</span>` : ''}
+            </div>
+            <div class="memory-context">${m.context || ''}</div>
+          </div>`).join('')
+      : '<div class="empty">no memory entries</div>';
+  }
+
+  async function loadAll() {
+    const btn = document.getElementById('refresh-btn');
+    const info = document.getElementById('sync-info');
+    const errEl = document.getElementById('error-banner');
+    btn.disabled = true;
+    btn.textContent = 'Syncing...';
+    btn.classList.add('pulsing');
+    info.textContent = 'syncing...';
+    errEl.style.display = 'none';
+
+    try {
+      const [runs, items, decisions, memory, prefs] = await Promise.all([
+        q('agent_runs', 'order=started_at.desc&limit=30'),
+        q('briefing_items', 'order=created_at.desc&limit=20'),
+        q('decisions', 'order=created_at.desc&limit=20'),
+        q('memory', 'order=entity.asc'),
+        q('preferences', 'order=confidence.desc'),
+      ]);
+
+      renderAgents(runs);
+      renderBriefing(items, decisions);
+      renderPreferences(prefs);
+      renderMemory(memory);
+
+      const now = new Date();
+      info.textContent = `last sync ${now.toLocaleTimeString('en-IE', { hour: '2-digit', minute: '2-digit' })}`;
+      document.getElementById('footer-ts').textContent = now.toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
+    } catch(e) {
+      errEl.style.display = 'block';
+      errEl.textContent = 'Error: ' + e.message;
+      info.textContent = 'sync failed';
+      console.error('Dashboard load failed:', e);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Refresh';
+      btn.classList.remove('pulsing');
     }
-  } catch(e) { console.error('Decision failed:', e); }
-}
-
-// Got it — marks as read and archives via /api/archive
-async function gotIt(itemId) {
-  const item = briefingItems.find(i => i.id === itemId);
-  if (!item) return;
-
-  const btn = document.getElementById(`godit-btn-${itemId}`);
-  if (btn) { btn.textContent = 'Archiving…'; btn.classList.add('archiving'); }
-
-  // Optimistic update immediately
-  item.status = 'approved';
-  decisions[itemId] = { action: 'archived', briefing_item_id: itemId, created_at: new Date().toISOString() };
-  updateStats();
-  render();
-
-  try {
-    // Log decision to Supabase
-    await q('decisions', '', 'POST', {
-      briefing_item_id: itemId, action: 'archived',
-      agent: item.agent,
-    });
-    await q(`briefing_items?id=eq.${itemId}`, '', 'PATCH', { status: 'approved' });
-
-    // Try to archive the email via Vercel function (graceful fail if not deployed yet)
-    const threadId = item.source_data?.thread_id;
-    if (threadId) {
-      try {
-        const res = await fetch('/api/archive', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ threadId }),
-        });
-        if (res.ok) {
-          showToast('✓ Archived', 'success');
-        } else {
-          // Archive endpoint not deployed yet — silently succeed
-          showToast('✓ Got it', 'success');
-        }
-      } catch(_) {
-        // /api/archive not available yet — that's fine
-        showToast('✓ Got it', 'success');
-      }
-    } else {
-      showToast('✓ Got it', 'success');
-    }
-  } catch(e) {
-    console.error('Got it failed:', e);
-    showToast('Failed to log', 'error');
-  }
-}
-
-// Choose a decision option
-async function chooseOption(itemId, option) {
-  const item = briefingItems.find(i => i.id === itemId);
-  if (!item) return;
-
-  item.status = 'approved';
-  decisions[itemId] = { action: 'chosen', edited_draft: option, briefing_item_id: itemId, created_at: new Date().toISOString() };
-  updateStats();
-  render();
-
-  try {
-    await q('decisions', '', 'POST', {
-      briefing_item_id: itemId, action: 'chosen',
-      agent: item.agent, edited_draft: option,
-    });
-    await q(`briefing_items?id=eq.${itemId}`, '', 'PATCH', { status: 'approved' });
-
-    // If this is an Aleksei prompt spec approval, log to memory
-    // so Aleksei knows it's been implemented and won't suggest it again
-    if (item.agent === 'aleksei') {
-      try {
-        await fetch('/api/log-implementation', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            briefingItemId: itemId,
-            title: item.title,
-            summary: item.summary,
-            product: item.source_data?.product || 'Keeper',
-          }),
-        });
-      } catch(e) {
-        // Non-fatal — decision is already logged, memory write failure
-        // just means Aleksei might re-suggest. Log but don't surface to user.
-        console.warn('log-implementation failed (non-fatal):', e.message);
-      }
-    }
-
-    showToast(`→ ${option}`, 'success');
-  } catch(e) { console.error('Choice failed:', e); }
-}
-
-// Send draft email via /api/send
-async function sendAndDecide(itemId, editedDraft) {
-  const item = briefingItems.find(i => i.id === itemId);
-  if (!item) return;
-
-  const btn = document.getElementById(`approve-btn-${itemId}`);
-  if (btn) { btn.textContent = 'Sending…'; btn.classList.add('sending'); }
-
-  try {
-    const res = await fetch('/api/send', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ briefingItemId: itemId, editedDraft: editedDraft || null }),
-    });
-
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.error || 'Send failed');
-    }
-
-    item.status = 'approved';
-    decisions[itemId] = { action: 'approved', briefing_item_id: itemId, created_at: new Date().toISOString() };
-
-    await q('decisions', '', 'POST', {
-      briefing_item_id: itemId, action: 'approved',
-      agent: item.agent, original_draft: item.draft || null,
-      edited_draft: editedDraft || null,
-    });
-    await q(`briefing_items?id=eq.${itemId}`, '', 'PATCH', { status: 'approved' });
-
-    updateStats();
-    render();
-    showToast('✉ Sent', 'success');
-  } catch(e) {
-    console.error('Send failed:', e);
-    showToast(`Send failed: ${e.message}`, 'error');
-    if (btn) { btn.textContent = '✉ Send'; btn.classList.remove('sending'); }
-  }
-}
-
-// ── AI Draft Improvement ───────────────────────────────────────
-
-function toggleImprove(itemId) {
-  if (improveState[itemId]?.open) {
-    closeImprove(itemId);
-  } else {
-    improveState[itemId] = { open: true, instruction: '', result: null, thinking: false };
-    render();
-    // Focus the textarea after render
-    setTimeout(() => {
-      const el = document.getElementById(`improve-input-${itemId}`);
-      if (el) el.focus();
-    }, 50);
-  }
-}
-
-function closeImprove(itemId) {
-  delete improveState[itemId];
-  render();
-}
-
-function discardImprove(itemId) {
-  improveState[itemId] = { open: true, instruction: '', result: null, thinking: false };
-  render();
-  setTimeout(() => {
-    const el = document.getElementById(`improve-input-${itemId}`);
-    if (el) el.focus();
-  }, 50);
-}
-
-function useImprovedDraft(itemId) {
-  const item = briefingItems.find(i => i.id === itemId);
-  if (!item) return;
-  // Bake the improved draft into the item so Send uses it
-  item.draft = improveState[itemId].result;
-  delete improveState[itemId];
-  render();
-}
-
-async function runImprove(itemId) {
-  const item = briefingItems.find(i => i.id === itemId);
-  if (!item) return;
-
-  const inputEl = document.getElementById(`improve-input-${itemId}`);
-  const instruction = inputEl ? inputEl.value.trim() : '';
-  if (!instruction) {
-    showToast('Add an instruction first', 'error');
-    return;
   }
 
-  improveState[itemId] = { open: true, instruction, result: null, thinking: true };
-  render();
-
-  try {
-    // Call via Vercel function — keeps ANTHROPIC_API_KEY server-side
-    const response = await fetch('/api/improve', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ draft: item.draft, instruction }),
-    });
-
-    if (!response.ok) {
-      const err = await response.json();
-      throw new Error(err.error || 'Improve failed');
-    }
-
-    const data = await response.json();
-    const result = data.result;
-    if (!result) throw new Error('No response from server');
-
-    improveState[itemId] = { open: true, instruction, result, thinking: false };
-    render();
-
-  } catch(e) {
-    console.error('Improve failed:', e);
-    improveState[itemId] = { open: true, instruction, result: null, thinking: false };
-    render();
-    showToast(`Improve failed: ${e.message}`, 'error');
-  }
-}
-
-// ── Edit modal (legacy — kept for fallback) ────────────────────
-function openEdit(itemId) {
-  const item = briefingItems.find(i => i.id === itemId);
-  if (!item) return;
-  editingItemId = itemId;
-  document.getElementById('modal-text').value = item.draft || '';
-  document.getElementById('modal').style.display = 'flex';
-}
-
-function closeModal() {
-  document.getElementById('modal').style.display = 'none';
-  editingItemId = null;
-  const btn = document.getElementById('btn-send-modal');
-  if (btn) { btn.textContent = 'Send Edited Reply →'; btn.disabled = false; }
-}
-
-async function submitEdit() {
-  if (!editingItemId) return;
-  const editedDraft = document.getElementById('modal-text').value;
-  const itemId = editingItemId;
-  closeModal();
-  await sendAndDecide(itemId, editedDraft);
-}
-
-// ── Init ───────────────────────────────────────────────────────
-// ── Re-run agent on demand ─────────────────────────────────────
-async function rerunAgent(agentName) {
-  const btns = document.querySelectorAll('.btn-rerun');
-  btns.forEach(b => { b.classList.add('triggering'); b.textContent = '↺ Triggering…'; });
-
-  try {
-    const res = await fetch(`${SB_URL}/agent_triggers`, {
-      method: 'POST',
-      headers: { ...H, Prefer: 'return=minimal' },
-      body: JSON.stringify({ agent: agentName, triggered_by: 'pwa', status: 'pending' }),
-    });
-    if (!res.ok) throw new Error(`Trigger failed: ${res.status}`);
-    showToast(`↺ ${agentName.charAt(0).toUpperCase() + agentName.slice(1)} triggered — check back in ~1 min`, 'success');
-  } catch(e) {
-    console.error('rerunAgent failed:', e);
-    showToast(`Trigger failed: ${e.message}`, 'error');
-  } finally {
-    btns.forEach(b => { b.classList.remove('triggering'); b.textContent = '↺ Re-run'; });
-  }
-}
-
-// ── Publish Pavel draft to Notion ─────────────────────────────
-async function publishPavelDraft(itemId) {
-  const item = briefingItems.find(i => i.id === itemId);
-  if (!item) return;
-
-  const btn = document.getElementById(`approve-btn-${itemId}`);
-  if (btn) { btn.textContent = 'Publishing…'; btn.classList.add('sending'); }
-
-  try {
-    const res = await fetch('/api/publish-notion', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ briefingItemId: itemId }),
-    });
-
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.error || 'Publish failed');
-    }
-
-    const data = await res.json();
-
-    item.status = 'approved';
-    decisions[itemId] = { action: 'approved', briefing_item_id: itemId, created_at: new Date().toISOString() };
-
-    await q('decisions', '', 'POST', {
-      briefing_item_id: itemId, action: 'approved',
-      agent: item.agent, original_draft: item.draft || null,
-    });
-    await q(`briefing_items?id=eq.${itemId}`, '', 'PATCH', { status: 'approved' });
-
-    updateStats(); render();
-    showToast(`✓ Published to Notion`, 'success');
-  } catch(e) {
-    console.error('Publish failed:', e);
-    showToast(`Publish failed: ${e.message}`, 'error');
-    if (btn) { btn.textContent = '✓ Publish'; btn.classList.remove('sending'); }
-  }
-}
-
-loadAll();
-setInterval(loadAll, 5 * 60 * 1000);
+  loadAll();
+  setInterval(loadAll, 2 * 60 * 1000);
 </script>
 </body>
 </html>
