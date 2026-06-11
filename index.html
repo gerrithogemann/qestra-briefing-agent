@@ -107,6 +107,9 @@
     .btn-godit.archiving { opacity: 0.6; pointer-events: none; }
     .btn-improve { background: rgba(167,139,250,0.08); color: var(--purple); border: 1px solid rgba(167,139,250,0.2); }
     .btn-improve:active { background: rgba(167,139,250,0.18); }
+    .btn-rerun { background: rgba(96,165,250,0.08); color: var(--blue); border: 1px solid rgba(96,165,250,0.2); flex: 0 0 auto; padding: 11px 14px; }
+    .btn-rerun:active { background: rgba(96,165,250,0.18); }
+    .btn-rerun.triggering { opacity: 0.6; pointer-events: none; }
 
     /* ── Decision options ── */
     .decision-options { display: flex; flex-direction: column; gap: 6px; margin-bottom: 0; }
@@ -469,8 +472,25 @@ function renderItem(item, decided) {
         `<button class="btn-option" onclick="chooseOption('${item.id}', '${opt.replace(/'/g,"\\'")}')">→ ${opt}</button>`
       ).join('');
       actions = `<div class="decision-options">${optBtns}</div>`;
+    } else if (type === 'decision' && item.agent === 'aleksei') {
+      // Aleksei prompt spec — approve + re-run button
+      actions = `
+        <div class="item-actions">
+          <button class="btn btn-approve" id="approve-btn-${item.id}" onclick="decide('${item.id}', 'approved')">✓ Implemented</button>
+          <button class="btn btn-rerun" onclick="rerunAgent('aleksei')" title="Re-run Aleksei now">↺ Re-run</button>
+          <button class="btn btn-reject" onclick="decide('${item.id}', 'rejected')">✗ Skip</button>
+        </div>`;
+    } else if (type === 'draft' && item.agent === 'pavel') {
+      // Pavel content draft — publish to Notion on approve
+      actions = `
+        <div class="item-actions">
+          <button class="btn btn-approve" id="approve-btn-${item.id}" onclick="publishPavelDraft('${item.id}')">✓ Publish</button>
+          <button class="btn btn-improve" onclick="toggleImprove('${item.id}')">✦ Improve</button>
+          <button class="btn btn-rerun" onclick="rerunAgent('pavel')" title="Re-run Pavel now">↺ Re-run</button>
+          <button class="btn btn-reject" onclick="decide('${item.id}', 'rejected')">✗ Reject</button>
+        </div>`;
     } else {
-      // Fallback for unknown types
+      // Fallback
       actions = `
         <div class="item-actions">
           <button class="btn btn-approve" onclick="decide('${item.id}', 'approved')">✓ Approve</button>
@@ -808,6 +828,67 @@ async function submitEdit() {
 }
 
 // ── Init ───────────────────────────────────────────────────────
+// ── Re-run agent on demand ─────────────────────────────────────
+async function rerunAgent(agentName) {
+  const btns = document.querySelectorAll('.btn-rerun');
+  btns.forEach(b => { b.classList.add('triggering'); b.textContent = '↺ Triggering…'; });
+
+  try {
+    const res = await fetch(`${SB_URL}/agent_triggers`, {
+      method: 'POST',
+      headers: { ...H, Prefer: 'return=minimal' },
+      body: JSON.stringify({ agent: agentName, triggered_by: 'pwa', status: 'pending' }),
+    });
+    if (!res.ok) throw new Error(`Trigger failed: ${res.status}`);
+    showToast(`↺ ${agentName.charAt(0).toUpperCase() + agentName.slice(1)} triggered — check back in ~1 min`, 'success');
+  } catch(e) {
+    console.error('rerunAgent failed:', e);
+    showToast(`Trigger failed: ${e.message}`, 'error');
+  } finally {
+    btns.forEach(b => { b.classList.remove('triggering'); b.textContent = '↺ Re-run'; });
+  }
+}
+
+// ── Publish Pavel draft to Notion ─────────────────────────────
+async function publishPavelDraft(itemId) {
+  const item = briefingItems.find(i => i.id === itemId);
+  if (!item) return;
+
+  const btn = document.getElementById(`approve-btn-${itemId}`);
+  if (btn) { btn.textContent = 'Publishing…'; btn.classList.add('sending'); }
+
+  try {
+    const res = await fetch('/api/publish-notion', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ briefingItemId: itemId }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Publish failed');
+    }
+
+    const data = await res.json();
+
+    item.status = 'approved';
+    decisions[itemId] = { action: 'approved', briefing_item_id: itemId, created_at: new Date().toISOString() };
+
+    await q('decisions', '', 'POST', {
+      briefing_item_id: itemId, action: 'approved',
+      agent: item.agent, original_draft: item.draft || null,
+    });
+    await q(`briefing_items?id=eq.${itemId}`, '', 'PATCH', { status: 'approved' });
+
+    updateStats(); render();
+    showToast(`✓ Published to Notion`, 'success');
+  } catch(e) {
+    console.error('Publish failed:', e);
+    showToast(`Publish failed: ${e.message}`, 'error');
+    if (btn) { btn.textContent = '✓ Publish'; btn.classList.remove('sending'); }
+  }
+}
+
 loadAll();
 setInterval(loadAll, 5 * 60 * 1000);
 </script>
