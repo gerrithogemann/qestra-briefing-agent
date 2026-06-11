@@ -553,6 +553,20 @@ async function decide(itemId, action) {
       agent: item.agent, original_draft: item.draft || null,
     });
     await q(`briefing_items?id=eq.${itemId}`, '', 'PATCH', { status: action });
+
+    // Aleksei approval: log to memory so he won't re-suggest (non-fatal)
+    if (item.agent === 'aleksei' && action === 'approved') {
+      fetch('/api/log-implementation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          briefingItemId: itemId,
+          title: item.title,
+          summary: item.summary,
+          product: item.source_data?.product || 'Keeper',
+        }),
+      }).catch(e => console.warn('log-implementation failed (non-fatal):', e.message));
+    }
   } catch(e) { console.error('Decision failed:', e); }
 }
 
