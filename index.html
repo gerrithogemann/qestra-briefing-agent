@@ -622,6 +622,28 @@ async function chooseOption(itemId, option) {
       agent: item.agent, edited_draft: option,
     });
     await q(`briefing_items?id=eq.${itemId}`, '', 'PATCH', { status: 'approved' });
+
+    // If this is an Aleksei prompt spec approval, log to memory
+    // so Aleksei knows it's been implemented and won't suggest it again
+    if (item.agent === 'aleksei') {
+      try {
+        await fetch('/api/log-implementation', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            briefingItemId: itemId,
+            title: item.title,
+            summary: item.summary,
+            product: item.source_data?.product || 'Keeper',
+          }),
+        });
+      } catch(e) {
+        // Non-fatal — decision is already logged, memory write failure
+        // just means Aleksei might re-suggest. Log but don't surface to user.
+        console.warn('log-implementation failed (non-fatal):', e.message);
+      }
+    }
+
     showToast(`→ ${option}`, 'success');
   } catch(e) { console.error('Choice failed:', e); }
 }
