@@ -45,10 +45,13 @@
     .stat-value.green { color: var(--green); }
 
     /* ── Tabs ── */
-    .tabs { display: flex; padding: 0 24px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
-    .tab { flex: 1; padding: 14px 0; font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); background: none; border: none; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; }
+    .tabs-wrapper { border-bottom: 1px solid var(--border); flex-shrink: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .tabs-wrapper::-webkit-scrollbar { display: none; }
+    .tabs { display: flex; padding: 0 24px; min-width: max-content; }
+    .tab { padding: 14px 12px; font-family: var(--mono); font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); background: none; border: none; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; white-space: nowrap; }
     .tab.active { color: var(--amber); border-bottom-color: var(--amber); }
-    .tab-badge { display: inline-block; background: var(--red); color: #000; font-size: 8px; font-weight: 700; padding: 1px 5px; border-radius: 10px; margin-left: 6px; vertical-align: middle; }
+    .tab-badge { display: inline-block; background: var(--red); color: #000; font-size: 8px; font-weight: 700; padding: 1px 5px; border-radius: 10px; margin-left: 5px; vertical-align: middle; }
+    .tab-badge.warn { background: var(--yellow); }
 
     /* ── Content ── */
     .content { flex: 1; overflow-y: auto; padding: 20px 24px 40px; }
@@ -67,8 +70,6 @@
       transition: border-color 0.2s; animation: fadeUp 0.3s ease both;
     }
     .briefing-item:active { border-color: var(--border2); }
-
-    /* type-specific left border accent */
     .briefing-item.type-draft { border-left: 2px solid rgba(96,165,250,0.4); }
     .briefing-item.type-insight { border-left: 2px solid rgba(245,158,11,0.3); }
     .briefing-item.type-decision { border-left: 2px solid rgba(167,139,250,0.4); }
@@ -117,7 +118,7 @@
     .btn-option:active { background: rgba(167,139,250,0.16); }
 
     /* ── Decided badges ── */
-    .item-decided { opacity: 0.45; pointer-events: none; }
+    .item-decided { opacity: 0.4; pointer-events: none; }
     .decided-badge { display: inline-flex; align-items: center; gap: 5px; font-family: var(--mono); font-size: 9px; padding: 4px 10px; border-radius: 4px; margin-bottom: 10px; }
     .decided-approved { background: rgba(74,222,128,0.08); color: var(--green); }
     .decided-rejected { background: rgba(248,113,113,0.08); color: var(--red); }
@@ -144,6 +145,13 @@
     .btn-use-result { flex: 1; padding: 10px; border-radius: 6px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; background: rgba(74,222,128,0.10); color: var(--green); border: 1px solid rgba(74,222,128,0.2); cursor: pointer; }
     .btn-discard-result { padding: 10px 14px; border-radius: 6px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; background: transparent; color: var(--muted); border: 1px solid var(--border2); cursor: pointer; }
     .improve-thinking { font-family: var(--mono); font-size: 11px; color: var(--purple); opacity: 0.7; padding: 8px 0; animation: pulse 1.2s ease-in-out infinite; }
+
+    /* ── Engineering tab ── */
+    .eng-trigger-bar { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .eng-trigger-label { font-family: var(--mono); font-size: 10px; color: var(--muted); letter-spacing: 0.08em; }
+    .btn-eng-trigger { padding: 10px 18px; border-radius: 7px; font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; background: rgba(96,165,250,0.08); color: var(--blue); border: 1px solid rgba(96,165,250,0.2); cursor: pointer; white-space: nowrap; transition: all 0.15s; }
+    .btn-eng-trigger:active { background: rgba(96,165,250,0.18); }
+    .btn-eng-trigger.triggering { opacity: 0.6; pointer-events: none; }
 
     /* ── Toast ── */
     .toast {
@@ -221,13 +229,30 @@
   </div>
 
   <!-- Tabs -->
-  <div class="tabs">
-    <button class="tab active" id="tab-briefing" onclick="switchTab('briefing')">
-      Briefing <span class="tab-badge" id="badge-pending" style="display:none">0</span>
-    </button>
-    <button class="tab" id="tab-runs" onclick="switchTab('runs')">
-      Runs <span class="tab-badge" id="badge-errors" style="display:none">!</span>
-    </button>
+  <div class="tabs-wrapper">
+    <div class="tabs">
+      <button class="tab active" id="tab-briefing" onclick="switchTab('briefing')">
+        Briefing <span class="tab-badge" id="badge-briefing" style="display:none">0</span>
+      </button>
+      <button class="tab" id="tab-inbox" onclick="switchTab('inbox')">
+        Inbox <span class="tab-badge" id="badge-inbox" style="display:none">0</span>
+      </button>
+      <button class="tab" id="tab-tasks" onclick="switchTab('tasks')">
+        Tasks <span class="tab-badge" id="badge-tasks" style="display:none">0</span>
+      </button>
+      <button class="tab" id="tab-engineering" onclick="switchTab('engineering')">
+        Engineering <span class="tab-badge" id="badge-engineering" style="display:none">0</span>
+      </button>
+      <button class="tab" id="tab-marketing" onclick="switchTab('marketing')">
+        Marketing <span class="tab-badge" id="badge-marketing" style="display:none">0</span>
+      </button>
+      <button class="tab" id="tab-all" onclick="switchTab('all')">
+        All <span class="tab-badge" id="badge-all" style="display:none">0</span>
+      </button>
+      <button class="tab" id="tab-runs" onclick="switchTab('runs')">
+        Runs <span class="tab-badge warn" id="badge-errors" style="display:none">!</span>
+      </button>
+    </div>
   </div>
 
   <!-- Content -->
@@ -252,17 +277,29 @@ const SB_URL = 'https://ztgdtthdmosjvqpauzqw.supabase.co/rest/v1';
 const SB_KEY = 'sb_publishable_ZoTVAdhfEe5K6eKoNZV5DQ_jw3yI0MD';
 const H = { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
 
-// No API keys in the PWA — all sensitive calls go through /api/* Vercel functions
-
 let currentTab = 'briefing';
 let briefingItems = [];
 let agentRuns = [];
 let decisions = {};
 let editingItemId = null;
-
-// Track which items have improve panels open and their state
-// improveState[itemId] = { open: bool, instruction: str, result: str|null, thinking: bool }
 const improveState = {};
+
+// ── Tab → agent mapping ────────────────────────────────────────
+// Which agent names belong to each tab
+const TAB_AGENTS = {
+  briefing:    ['igor'],
+  inbox:       ['masha'],
+  tasks:       ['boris', 'boris-keeper', 'boris-tropiq', 'boris-sorte-do-jugo'],
+  engineering: ['aleksei'],
+  marketing:   ['pavel'],
+};
+
+function getTabForAgent(agent='') {
+  for (const [tab, agents] of Object.entries(TAB_AGENTS)) {
+    if (agents.includes(agent)) return tab;
+  }
+  return 'all'; // unknown agents fall through to All only
+}
 
 async function q(table, params='', method='GET', body=null) {
   const opts = { method, headers: H };
@@ -286,10 +323,19 @@ function formatDate() {
 }
 
 const AGENT_NAMES = {
-  'igor': 'Igor', 'masha': 'Masha', 'vera': 'Vera',
-  'boris-keeper': 'Boris · Keeper', 'boris-tropiq': 'Boris · TropiQ',
+  'igor': 'Igor',
+  'masha': 'Masha',
+  'vera': 'Vera',
+  'aleksei': 'Aleksei',
+  'pavel': 'Pavel',
+  'boris': 'Boris',
+  'boris-keeper': 'Boris',
+  'boris-tropiq': 'Boris · TropiQ',
   'boris-sorte-do-jugo': 'Boris · Sorte do Jugo',
-  'dmitri-personal': 'Dmitri · Personal', 'dmitri-qestra': 'Dmitri · Qestra',
+  'dmitri-personal': 'Dmitri · Personal',
+  'dmitri-qestra': 'Dmitri · Qestra',
+  'katya': 'Katya',
+  'nadia': 'Nadia',
 };
 function shortAgent(name='') {
   return AGENT_NAMES[name] || name.replace('aleksandra-','').replace('-agent','').toUpperCase();
@@ -311,9 +357,9 @@ async function loadAll() {
   document.getElementById('date-line').textContent = formatDate();
   try {
     const [items, runs, decs] = await Promise.all([
-      q('briefing_items', 'order=created_at.desc&limit=30'),
+      q('briefing_items', 'order=created_at.asc&limit=60'),
       q('agent_runs', 'order=started_at.desc&limit=20'),
-      q('decisions', 'order=created_at.desc&limit=50'),
+      q('decisions', 'order=created_at.desc&limit=100'),
     ]);
     briefingItems = items;
     agentRuns = runs;
@@ -328,44 +374,79 @@ async function loadAll() {
   }
 }
 
+function getPendingCountForTab(tab) {
+  const items = getItemsForTab(tab);
+  return items.filter(i => i.status === 'pending').length;
+}
+
 function updateStats() {
   const pending = briefingItems.filter(i => i.status === 'pending').length;
   const done = Object.keys(decisions).length;
   const uniqueAgents = new Set(agentRuns.map(r => r.agent)).size;
   const hasErrors = agentRuns.some(r => r.status === 'error');
+
   document.getElementById('stat-pending').textContent = pending;
   document.getElementById('stat-done').textContent = done;
   document.getElementById('stat-agents').textContent = uniqueAgents;
-  const badge = document.getElementById('badge-pending');
-  if (pending > 0) { badge.textContent = pending; badge.style.display = 'inline-block'; }
-  else badge.style.display = 'none';
+
+  // Update per-tab badges
+  const tabNames = ['briefing','inbox','tasks','engineering','marketing','all'];
+  tabNames.forEach(tab => {
+    const badge = document.getElementById(`badge-${tab}`);
+    if (!badge) return;
+    const count = getPendingCountForTab(tab);
+    if (count > 0) { badge.textContent = count; badge.style.display = 'inline-block'; }
+    else badge.style.display = 'none';
+  });
+
   document.getElementById('badge-errors').style.display = hasErrors ? 'inline-block' : 'none';
+}
+
+function getItemsForTab(tab) {
+  if (tab === 'all') return briefingItems;
+  if (tab === 'runs') return [];
+  const agents = TAB_AGENTS[tab];
+  if (!agents) return briefingItems;
+  return briefingItems.filter(i => agents.includes(i.agent));
 }
 
 function switchTab(tab) {
   currentTab = tab;
-  document.getElementById('tab-briefing').className = 'tab' + (tab === 'briefing' ? ' active' : '');
-  document.getElementById('tab-runs').className = 'tab' + (tab === 'runs' ? ' active' : '');
+  const allTabs = ['briefing','inbox','tasks','engineering','marketing','all','runs'];
+  allTabs.forEach(t => {
+    const el = document.getElementById(`tab-${t}`);
+    if (el) el.className = 'tab' + (t === tab ? ' active' : '');
+  });
   render();
 }
 
 function render() {
-  if (currentTab === 'briefing') renderBriefing();
-  else renderRuns();
+  if (currentTab === 'runs') { renderRuns(); return; }
+  if (currentTab === 'engineering') { renderEngineering(); return; }
+  renderItemsTab(currentTab);
 }
 
-// ── Briefing tab ───────────────────────────────────────────────
-function renderBriefing() {
+// ── Generic items tab ──────────────────────────────────────────
+function renderItemsTab(tab) {
   const content = document.getElementById('content');
-  const pending = briefingItems.filter(i => i.status === 'pending');
-  const actioned = briefingItems.filter(i => i.status !== 'pending');
+  const allForTab = getItemsForTab(tab);
 
-  if (briefingItems.length === 0) {
-    content.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-state-icon">🌙</div>
-        <div class="empty-state-text">No briefing items yet.<br>Agents run at 07:30–08:15 IST each morning.</div>
-      </div>`;
+  // Sort: pending oldest→newest first, then actioned
+  const pending  = allForTab.filter(i => i.status === 'pending')
+    .sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
+  const actioned = allForTab.filter(i => i.status !== 'pending')
+    .sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+
+  if (allForTab.length === 0) {
+    const emptyMessages = {
+      briefing:    ['🌙', 'No briefing yet today.\nIgor runs at 07:00 UTC (08:00 IST).'],
+      inbox:       ['📭', 'No emails to action.\nMasha runs at 07:15 UTC (08:15 IST).'],
+      tasks:       ['✓', 'No task alerts.\nBoris runs at 06:30 UTC.'],
+      marketing:   ['📝', 'No marketing drafts.\nPavel runs Sundays at 21:00 UTC.'],
+      all:         ['🌙', 'No briefing items yet.\nAgents run from 06:00–07:15 UTC.'],
+    };
+    const [icon, text] = emptyMessages[tab] || ['🌙', 'Nothing here yet.'];
+    content.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${icon}</div><div class="empty-state-text">${text}</div></div>`;
     return;
   }
 
@@ -375,12 +456,64 @@ function renderBriefing() {
     pending.forEach(item => { html += renderItem(item, false); });
   }
   if (actioned.length > 0) {
-    html += `<div class="section-head" style="margin-top:24px">Actioned · ${actioned.length}</div>`;
+    html += `<div class="section-head" style="margin-top:${pending.length > 0 ? '24px' : '4px'}">Actioned · ${actioned.length}</div>`;
     actioned.forEach(item => { html += renderItem(item, true); });
   }
   content.innerHTML = html;
 }
 
+// ── Engineering tab ────────────────────────────────────────────
+function renderEngineering() {
+  const content = document.getElementById('content');
+  const allForTab = getItemsForTab('engineering');
+
+  const pending  = allForTab.filter(i => i.status === 'pending')
+    .sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
+  const actioned = allForTab.filter(i => i.status !== 'pending')
+    .sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+
+  let html = `
+    <div class="eng-trigger-bar">
+      <span class="eng-trigger-label">Run Aleksei on demand</span>
+      <button class="btn-eng-trigger" id="btn-eng-trigger" onclick="triggerAleksei()">↺ Run now</button>
+    </div>`;
+
+  if (allForTab.length === 0) {
+    html += `<div class="empty-state"><div class="empty-state-icon">⚙</div><div class="empty-state-text">No engineering items yet.\nAleksei runs at 06:00 UTC daily.</div></div>`;
+  } else {
+    if (pending.length > 0) {
+      html += `<div class="section-head">Pending · ${pending.length}</div>`;
+      pending.forEach(item => { html += renderItem(item, false); });
+    }
+    if (actioned.length > 0) {
+      html += `<div class="section-head" style="margin-top:${pending.length > 0 ? '24px' : '4px'}">Actioned · ${actioned.length}</div>`;
+      actioned.forEach(item => { html += renderItem(item, true); });
+    }
+  }
+
+  content.innerHTML = html;
+}
+
+async function triggerAleksei() {
+  const btn = document.getElementById('btn-eng-trigger');
+  if (btn) { btn.classList.add('triggering'); btn.textContent = '↺ Triggering…'; }
+
+  try {
+    const res = await fetch(`${SB_URL}/agent_triggers`, {
+      method: 'POST',
+      headers: { ...H, Prefer: 'return=minimal' },
+      body: JSON.stringify({ agent: 'aleksei', triggered_by: 'pwa', status: 'pending' }),
+    });
+    if (!res.ok) throw new Error(`Trigger failed: ${res.status}`);
+    showToast('↺ Aleksei triggered — check back in ~1 min', 'success');
+  } catch(e) {
+    showToast(`Trigger failed: ${e.message}`, 'error');
+  } finally {
+    if (btn) { btn.classList.remove('triggering'); btn.textContent = '↺ Run now'; }
+  }
+}
+
+// ── Render a single item ───────────────────────────────────────
 function renderItem(item, decided) {
   const dec = decisions[item.id];
   const type = item.type || 'insight';
@@ -407,7 +540,6 @@ function renderItem(item, decided) {
   // ── Draft box ──
   let draftHtml = '';
   if (item.draft) {
-    // Show improved draft if available, otherwise original
     const displayDraft = state.result || item.draft;
     const draftLabel = state.result ? 'Improved Draft' : 'Draft Reply';
     const labelColor = state.result ? 'color:var(--green)' : '';
@@ -449,39 +581,21 @@ function renderItem(item, decided) {
     }
   }
 
-  // ── Action buttons by type ──
+  // ── Action buttons by agent + type ──
   let actions = '';
   if (!dec) {
-    if (type === 'draft') {
-      // Draft: Send · Improve · Reject
-      actions = `
-        <div class="item-actions">
-          <button class="btn btn-approve" id="approve-btn-${item.id}" onclick="decide('${item.id}', 'approved')">✉ Send</button>
-          <button class="btn btn-improve" onclick="toggleImprove('${item.id}')">✦ Improve</button>
-          <button class="btn btn-reject" onclick="decide('${item.id}', 'rejected')">✗ Reject</button>
-        </div>`;
-    } else if (type === 'insight') {
-      // Insight: Got it (archives email)
-      actions = `
-        <div class="item-actions">
-          <button class="btn btn-godit" id="godit-btn-${item.id}" onclick="gotIt('${item.id}')">✓ Got it</button>
-        </div>`;
-    } else if (type === 'decision' && item.options && item.options.length > 0) {
-      // Decision: option buttons
-      const optBtns = item.options.map(opt =>
-        `<button class="btn-option" onclick="chooseOption('${item.id}', '${opt.replace(/'/g,"\\'")}')">→ ${opt}</button>`
-      ).join('');
-      actions = `<div class="decision-options">${optBtns}</div>`;
-    } else if (type === 'decision' && item.agent === 'aleksei') {
-      // Aleksei prompt spec — approve + re-run button
+    const agent = item.agent || '';
+
+    if (agent === 'aleksei') {
+      // Aleksei prompt spec — Implemented / Skip (Re-run is in the header bar)
       actions = `
         <div class="item-actions">
           <button class="btn btn-approve" id="approve-btn-${item.id}" onclick="decide('${item.id}', 'approved')">✓ Implemented</button>
-          <button class="btn btn-rerun" onclick="rerunAgent('aleksei')" title="Re-run Aleksei now">↺ Re-run</button>
           <button class="btn btn-reject" onclick="decide('${item.id}', 'rejected')">✗ Skip</button>
         </div>`;
-    } else if (type === 'draft' && item.agent === 'pavel') {
-      // Pavel content draft — publish to Notion on approve
+
+    } else if (agent === 'pavel') {
+      // Pavel content draft — Publish / Improve / Re-run / Reject
       actions = `
         <div class="item-actions">
           <button class="btn btn-approve" id="approve-btn-${item.id}" onclick="publishPavelDraft('${item.id}')">✓ Publish</button>
@@ -489,6 +603,30 @@ function renderItem(item, decided) {
           <button class="btn btn-rerun" onclick="rerunAgent('pavel')" title="Re-run Pavel now">↺ Re-run</button>
           <button class="btn btn-reject" onclick="decide('${item.id}', 'rejected')">✗ Reject</button>
         </div>`;
+
+    } else if (type === 'draft') {
+      // Standard draft (Masha) — Send / Improve / Reject
+      actions = `
+        <div class="item-actions">
+          <button class="btn btn-approve" id="approve-btn-${item.id}" onclick="decide('${item.id}', 'approved')">✉ Send</button>
+          <button class="btn btn-improve" onclick="toggleImprove('${item.id}')">✦ Improve</button>
+          <button class="btn btn-reject" onclick="decide('${item.id}', 'rejected')">✗ Reject</button>
+        </div>`;
+
+    } else if (type === 'insight') {
+      // Insight (Igor / Boris) — Got it
+      actions = `
+        <div class="item-actions">
+          <button class="btn btn-godit" id="godit-btn-${item.id}" onclick="gotIt('${item.id}')">✓ Got it</button>
+        </div>`;
+
+    } else if (type === 'decision' && item.options && item.options.length > 0) {
+      // Decision with options
+      const optBtns = item.options.map(opt =>
+        `<button class="btn-option" onclick="chooseOption('${item.id}', '${opt.replace(/'/g,"\\'")}')">→ ${opt}</button>`
+      ).join('');
+      actions = `<div class="decision-options">${optBtns}</div>`;
+
     } else {
       // Fallback
       actions = `
@@ -525,7 +663,7 @@ function renderRuns() {
     content.innerHTML = `
       <div class="empty-state">
         <div class="empty-state-icon">⏳</div>
-        <div class="empty-state-text">No agent runs yet.<br>First run tomorrow at 07:30 IST.</div>
+        <div class="empty-state-text">No agent runs yet.<br>First run at 06:00 UTC.</div>
       </div>`;
     return;
   }
@@ -547,15 +685,12 @@ function renderRuns() {
 }
 
 // ── Actions ────────────────────────────────────────────────────
-
-// Generic decide (non-send, non-archive)
 async function decide(itemId, action) {
   const item = briefingItems.find(i => i.id === itemId);
   if (!item) return;
 
-  const isEmailDraft = item.type === 'draft' && !!item.draft;
+  const isEmailDraft = item.type === 'draft' && item.agent === 'masha' && !!item.draft;
   if (action === 'approved' && isEmailDraft) {
-    // Get the current draft text (may have been improved)
     const draftEl = document.getElementById(`draft-text-${itemId}`);
     const currentDraft = draftEl ? draftEl.textContent : item.draft;
     await sendAndDecide(itemId, currentDraft !== item.draft ? currentDraft : null);
@@ -574,7 +709,6 @@ async function decide(itemId, action) {
     });
     await q(`briefing_items?id=eq.${itemId}`, '', 'PATCH', { status: action });
 
-    // Aleksei approval: log to memory so he won't re-suggest (non-fatal)
     if (item.agent === 'aleksei' && action === 'approved') {
       fetch('/api/log-implementation', {
         method: 'POST',
@@ -590,7 +724,6 @@ async function decide(itemId, action) {
   } catch(e) { console.error('Decision failed:', e); }
 }
 
-// Got it — marks as read and archives via /api/archive
 async function gotIt(itemId) {
   const item = briefingItems.find(i => i.id === itemId);
   if (!item) return;
@@ -598,21 +731,15 @@ async function gotIt(itemId) {
   const btn = document.getElementById(`godit-btn-${itemId}`);
   if (btn) { btn.textContent = 'Archiving…'; btn.classList.add('archiving'); }
 
-  // Optimistic update immediately
   item.status = 'approved';
   decisions[itemId] = { action: 'archived', briefing_item_id: itemId, created_at: new Date().toISOString() };
   updateStats();
   render();
 
   try {
-    // Log decision to Supabase
-    await q('decisions', '', 'POST', {
-      briefing_item_id: itemId, action: 'archived',
-      agent: item.agent,
-    });
+    await q('decisions', '', 'POST', { briefing_item_id: itemId, action: 'archived', agent: item.agent });
     await q(`briefing_items?id=eq.${itemId}`, '', 'PATCH', { status: 'approved' });
 
-    // Try to archive the email via Vercel function (graceful fail if not deployed yet)
     const threadId = item.source_data?.thread_id;
     if (threadId) {
       try {
@@ -621,16 +748,8 @@ async function gotIt(itemId) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ threadId }),
         });
-        if (res.ok) {
-          showToast('✓ Archived', 'success');
-        } else {
-          // Archive endpoint not deployed yet — silently succeed
-          showToast('✓ Got it', 'success');
-        }
-      } catch(_) {
-        // /api/archive not available yet — that's fine
-        showToast('✓ Got it', 'success');
-      }
+        showToast(res.ok ? '✓ Archived' : '✓ Got it', 'success');
+      } catch(_) { showToast('✓ Got it', 'success'); }
     } else {
       showToast('✓ Got it', 'success');
     }
@@ -640,7 +759,6 @@ async function gotIt(itemId) {
   }
 }
 
-// Choose a decision option
 async function chooseOption(itemId, option) {
   const item = briefingItems.find(i => i.id === itemId);
   if (!item) return;
@@ -657,32 +775,21 @@ async function chooseOption(itemId, option) {
     });
     await q(`briefing_items?id=eq.${itemId}`, '', 'PATCH', { status: 'approved' });
 
-    // If this is an Aleksei prompt spec approval, log to memory
-    // so Aleksei knows it's been implemented and won't suggest it again
     if (item.agent === 'aleksei') {
-      try {
-        await fetch('/api/log-implementation', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            briefingItemId: itemId,
-            title: item.title,
-            summary: item.summary,
-            product: item.source_data?.product || 'Keeper',
-          }),
-        });
-      } catch(e) {
-        // Non-fatal — decision is already logged, memory write failure
-        // just means Aleksei might re-suggest. Log but don't surface to user.
-        console.warn('log-implementation failed (non-fatal):', e.message);
-      }
+      fetch('/api/log-implementation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          briefingItemId: itemId, title: item.title,
+          summary: item.summary, product: item.source_data?.product || 'Keeper',
+        }),
+      }).catch(e => console.warn('log-implementation non-fatal:', e.message));
     }
 
     showToast(`→ ${option}`, 'success');
   } catch(e) { console.error('Choice failed:', e); }
 }
 
-// Send draft email via /api/send
 async function sendAndDecide(itemId, editedDraft) {
   const item = briefingItems.find(i => i.id === itemId);
   if (!item) return;
@@ -723,14 +830,12 @@ async function sendAndDecide(itemId, editedDraft) {
 }
 
 // ── AI Draft Improvement ───────────────────────────────────────
-
 function toggleImprove(itemId) {
   if (improveState[itemId]?.open) {
     closeImprove(itemId);
   } else {
     improveState[itemId] = { open: true, instruction: '', result: null, thinking: false };
     render();
-    // Focus the textarea after render
     setTimeout(() => {
       const el = document.getElementById(`improve-input-${itemId}`);
       if (el) el.focus();
@@ -755,7 +860,6 @@ function discardImprove(itemId) {
 function useImprovedDraft(itemId) {
   const item = briefingItems.find(i => i.id === itemId);
   if (!item) return;
-  // Bake the improved draft into the item so Send uses it
   item.draft = improveState[itemId].result;
   delete improveState[itemId];
   render();
@@ -776,7 +880,6 @@ async function runImprove(itemId) {
   render();
 
   try {
-    // Call via Vercel function — keeps ANTHROPIC_API_KEY server-side
     const response = await fetch('/api/improve', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -794,7 +897,6 @@ async function runImprove(itemId) {
 
     improveState[itemId] = { open: true, instruction, result, thinking: false };
     render();
-
   } catch(e) {
     console.error('Improve failed:', e);
     improveState[itemId] = { open: true, instruction, result: null, thinking: false };
@@ -803,7 +905,7 @@ async function runImprove(itemId) {
   }
 }
 
-// ── Edit modal (legacy — kept for fallback) ────────────────────
+// ── Edit modal ─────────────────────────────────────────────────
 function openEdit(itemId) {
   const item = briefingItems.find(i => i.id === itemId);
   if (!item) return;
@@ -827,7 +929,6 @@ async function submitEdit() {
   await sendAndDecide(itemId, editedDraft);
 }
 
-// ── Init ───────────────────────────────────────────────────────
 // ── Re-run agent on demand ─────────────────────────────────────
 async function rerunAgent(agentName) {
   const btns = document.querySelectorAll('.btn-rerun');
@@ -869,8 +970,6 @@ async function publishPavelDraft(itemId) {
       throw new Error(err.error || 'Publish failed');
     }
 
-    const data = await res.json();
-
     item.status = 'approved';
     decisions[itemId] = { action: 'approved', briefing_item_id: itemId, created_at: new Date().toISOString() };
 
@@ -881,7 +980,7 @@ async function publishPavelDraft(itemId) {
     await q(`briefing_items?id=eq.${itemId}`, '', 'PATCH', { status: 'approved' });
 
     updateStats(); render();
-    showToast(`✓ Published to Notion`, 'success');
+    showToast('✓ Published to Notion', 'success');
   } catch(e) {
     console.error('Publish failed:', e);
     showToast(`Publish failed: ${e.message}`, 'error');
@@ -889,6 +988,7 @@ async function publishPavelDraft(itemId) {
   }
 }
 
+// ── Init ───────────────────────────────────────────────────────
 loadAll();
 setInterval(loadAll, 5 * 60 * 1000);
 </script>
